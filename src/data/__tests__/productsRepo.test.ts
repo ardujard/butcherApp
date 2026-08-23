@@ -1,0 +1,33 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { resetDBForTests } from '../db'
+import { archiveProduct, createProduct, listProducts, renameProduct, restoreProduct } from '../productsRepo'
+
+beforeEach(async () => {
+  await resetDBForTests()
+})
+
+describe('productsRepo', () => {
+  it('creates and lists products, excluding archived by default', async () => {
+    await createProduct('Kaasburger', 'discrete', null)
+    const sauce = await createProduct('Sauce', 'bulk', null)
+    await archiveProduct(sauce.id)
+
+    expect((await listProducts()).map((p) => p.name)).toEqual(['Kaasburger'])
+    expect(await listProducts(true)).toHaveLength(2)
+  })
+
+  it('restores an archived product', async () => {
+    const product = await createProduct('Sauce', 'bulk', null)
+    await archiveProduct(product.id)
+    await restoreProduct(product.id)
+    expect((await listProducts()).map((p) => p.id)).toContain(product.id)
+  })
+
+  it('renames a product and updates its label', async () => {
+    const product = await createProduct('Sauce', 'bulk', null)
+    await renameProduct(product.id, 'Spaghetti sauce', 'label-1')
+    const [updated] = await listProducts()
+    expect(updated.name).toBe('Spaghetti sauce')
+    expect(updated.labelId).toBe('label-1')
+  })
+})
