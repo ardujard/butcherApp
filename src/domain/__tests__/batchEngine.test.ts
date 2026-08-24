@@ -64,7 +64,7 @@ describe('replayEvents (discrete)', () => {
     expect(totalActiveQty(result)).toBe(12)
   })
 
-  it('a shortfall depletes pre-existing stock LIFO (newest-of-the-old first), leaving the fresh batch untouched', () => {
+  it('a shortfall depletes pre-existing stock FIFO (oldest-of-the-old first), leaving the fresh batch untouched', () => {
     const events = [
       topup('2026-08-20T08:00:00Z', '2026-08-20', 10, 10),
       topup('2026-08-21T08:00:00Z', '2026-08-21', 10, 20), // total now 20, matches
@@ -72,11 +72,11 @@ describe('replayEvents (discrete)', () => {
       topup('2026-08-22T08:00:00Z', '2026-08-22', 5, 17),
     ]
     const result = replayEvents(events, 'discrete')
-    // 8 consumed from pre-existing (10 08-20 + 10 08-21 = 20), newest-old-first: all 8 comes from 08-21
+    // 8 consumed from pre-existing (10 08-20 + 10 08-21 = 20), oldest-first: all 8 comes from 08-20
     expect(activeComposition(result)).toEqual([
       { date: '2026-08-22', qty: 5 },
-      { date: '2026-08-21', qty: 2 },
-      { date: '2026-08-20', qty: 10 },
+      { date: '2026-08-21', qty: 10 },
+      { date: '2026-08-20', qty: 2 },
     ])
     expect(result.unexplainedShortfall).toBe(0)
   })
@@ -150,17 +150,14 @@ describe('replayEvents (discrete)', () => {
     expect(activeComposition(result)).toEqual([{ date: '2026-08-21', qty: 15 }])
   })
 
-  it('a checkpoint depletes newest-first and reveals the surviving date composition', () => {
+  it('a checkpoint depletes oldest-first and reveals the surviving date composition', () => {
     const events = [
       topup('2026-08-20T08:00:00Z', '2026-08-20', 4, 4),
       topup('2026-08-22T08:00:00Z', '2026-08-22', 8, 12),
-      checkpoint('2026-08-23T08:00:00Z', 6), // 6 left out of 12 -> deplete 6 newest-first
+      checkpoint('2026-08-23T08:00:00Z', 6), // 6 left out of 12 -> deplete 6 oldest-first
     ]
     const result = replayEvents(events, 'discrete')
-    expect(activeComposition(result)).toEqual([
-      { date: '2026-08-22', qty: 2 },
-      { date: '2026-08-20', qty: 4 },
-    ])
+    expect(activeComposition(result)).toEqual([{ date: '2026-08-22', qty: 6 }])
   })
 })
 
@@ -174,14 +171,17 @@ describe('replayEvents (bulk)', () => {
     ])
   })
 
-  it('a checkpoint depletes bulk percentage points LIFO just like discrete units', () => {
+  it('a checkpoint depletes bulk percentage points FIFO just like discrete units', () => {
     const events = [
       bulkTopup('2026-08-20T08:00:00Z', '2026-08-20', 50),
       bulkTopup('2026-08-21T08:00:00Z', '2026-08-21', 25),
       checkpoint('2026-08-22T08:00:00Z', 40),
     ]
     const result = replayEvents(events, 'bulk')
-    // deplete 35 newest-first: all 25 from 08-21, then 10 from 08-20
-    expect(activeComposition(result)).toEqual([{ date: '2026-08-20', qty: 40 }])
+    // deplete 35 oldest-first: all 35 from 08-20
+    expect(activeComposition(result)).toEqual([
+      { date: '2026-08-21', qty: 25 },
+      { date: '2026-08-20', qty: 15 },
+    ])
   })
 })

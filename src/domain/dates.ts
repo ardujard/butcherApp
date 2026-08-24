@@ -1,6 +1,4 @@
 const DAY_MS = 24 * 60 * 60 * 1000
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 // All date-only arithmetic is done in UTC and only ever formatted back out as
 // 'YYYY-MM-DD'. This keeps day-boundary math independent of the device's
@@ -31,9 +29,9 @@ export function relativeDayLabel(dateISO: string, from: Date = new Date()): stri
   const diffDays = Math.round((atUTCMidnight(dateISO).getTime() - atUTCMidnight(today).getTime()) / DAY_MS)
 
   if (diffDays === 0) return 'Today'
-  if (diffDays === -1) return 'Yesterday'
-  if (diffDays < 0 && diffDays > -7) return DAY_NAMES[atUTCMidnight(dateISO).getUTCDay()]
 
   const d = atUTCMidnight(dateISO)
-  return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]}`
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}`
 }

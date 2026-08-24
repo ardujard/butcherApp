@@ -46,7 +46,7 @@ export interface ReplayResult {
   /** productionDate ('YYYY-MM-DD') or UNKNOWN_DATE -> remaining qty */
   batches: Record<string, number>
   /**
-   * Total quantity a recount claimed was consumed that the LIFO history
+   * Total quantity a recount claimed was consumed that the FIFO depletion
    * couldn't actually account for (i.e. the stated total implied more
    * shrinkage than the recorded stock could explain). Surfaced as a
    * data-quality warning, never silently forced into the numbers.

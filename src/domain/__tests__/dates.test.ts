@@ -18,16 +18,20 @@ describe('lastNDays', () => {
 describe('relativeDayLabel', () => {
   const from = new Date('2026-08-23T12:00:00Z') // a Sunday
 
-  it('labels today and yesterday', () => {
+  it('labels today', () => {
     expect(relativeDayLabel('2026-08-23', from)).toBe('Today')
-    expect(relativeDayLabel('2026-08-22', from)).toBe('Yesterday')
   })
 
-  it('labels the rest of the last 7 days by weekday name', () => {
-    expect(relativeDayLabel('2026-08-21', from)).toBe('Friday')
+  it('labels yesterday and the rest of the last 7 days as dd/mm', () => {
+    expect(relativeDayLabel('2026-08-22', from)).toBe('22/08')
+    expect(relativeDayLabel('2026-08-21', from)).toBe('21/08')
   })
 
-  it('falls back to a short date beyond the last 7 days', () => {
-    expect(relativeDayLabel('2026-08-10', from)).toBe('10 Aug')
+  it('falls back to dd/mm beyond the last 7 days', () => {
+    expect(relativeDayLabel('2026-08-10', from)).toBe('10/08')
+  })
+
+  it('zero-pads single-digit day and month', () => {
+    expect(relativeDayLabel('2026-08-05', from)).toBe('05/08')
   })
 })

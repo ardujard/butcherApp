@@ -14,7 +14,8 @@ export function ProductionDateChips({ value, onChange }: Props) {
   const [showOther, setShowOther] = useState(() => value !== '' && !last7.includes(value))
 
   const extraRecent = recent.filter((d) => !last7.includes(d))
-  const options = [...last7, ...extraRecent]
+  // last7/extraRecent are newest first; reverse so oldest is leftmost and today is rightmost.
+  const options = [...last7, ...extraRecent].reverse()
 
   return (
     <div className="field">

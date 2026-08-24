@@ -13,13 +13,17 @@ function compareDatesNewestFirst(a: string, b: string): number {
 }
 
 /**
- * Consumes `amount` from `batches` in place, newest production date first
- * (LIFO), skipping the unknown/unattributed bucket. Returns whatever portion
- * of `amount` couldn't be absorbed because there wasn't enough dated stock.
+ * Consumes `amount` from `batches` in place, oldest production date first
+ * (FIFO), skipping the unknown/unattributed bucket. A recount shortfall is
+ * attributed to the stock staff are expected to sell down first, not to
+ * whatever was just added. Returns whatever portion of `amount` couldn't be
+ * absorbed because there wasn't enough dated stock.
  */
-function depleteLifo(batches: Record<string, number>, amount: number): number {
+function depleteFifo(batches: Record<string, number>, amount: number): number {
   let remaining = amount
-  const dates = Object.keys(batches).sort(compareDatesNewestFirst).filter((d) => d !== UNKNOWN_DATE)
+  const dates = Object.keys(batches)
+    .filter((d) => d !== UNKNOWN_DATE)
+    .sort((a, b) => -compareDatesNewestFirst(a, b))
 
   for (const date of dates) {
     if (remaining <= 0) break
@@ -60,7 +64,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
         const preSum = sum(batches)
         const diff = statedTotal - (preSum + addAmt)
         if (diff < 0) {
-          unexplainedShortfall += depleteLifo(batches, -diff)
+          unexplainedShortfall += depleteFifo(batches, -diff)
         } else if (diff > 0) {
           batches[UNKNOWN_DATE] = (batches[UNKNOWN_DATE] ?? 0) + diff
         }
@@ -71,7 +75,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
       const payload = event.payload as CheckpointPayload
       const diff = payload.statedTotal - sum(batches)
       if (diff < 0) {
-        unexplainedShortfall += depleteLifo(batches, -diff)
+        unexplainedShortfall += depleteFifo(batches, -diff)
       } else if (diff > 0) {
         batches[UNKNOWN_DATE] = (batches[UNKNOWN_DATE] ?? 0) + diff
       }
