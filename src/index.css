@@ -9,6 +9,8 @@
   --danger: #b3261e;
   --warning: #92620a;
   --warning-bg: #fdf1d8;
+  --success: #1f6f50;
+  --success-bg: #e3f3ea;
   --chip-bg: #eceef1;
   --chip-selected-bg: var(--accent);
   --chip-selected-text: #ffffff;
@@ -34,6 +36,8 @@
     --danger: #ff6b63;
     --warning: #e8b33d;
     --warning-bg: #3a300f;
+    --success: #3fae82;
+    --success-bg: #16281f;
     --chip-bg: #2a2d32;
     --chip-selected-bg: var(--accent);
     --chip-selected-text: #0b120f;
@@ -361,6 +365,14 @@ select {
   border-radius: 12px;
   background: var(--warning-bg);
   color: var(--warning);
+  font-size: 15px;
+}
+
+.success-banner {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--success-bg);
+  color: var(--success);
   font-size: 15px;
 }
 
