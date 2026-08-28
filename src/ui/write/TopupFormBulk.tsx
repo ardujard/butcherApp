@@ -52,7 +52,7 @@ export function TopupFormBulk({ product, currentTotal, onSubmit }: Props) {
       </div>
       {overflow && (
         <div className="warning-banner">
-          This would push the counter past 100% full — consider doing a recount in Read mode instead.
+          This would push the counter past 100% full — consider doing a recount in Controleer mode instead.
         </div>
       )}
       <ProductionDateChips value={productionDate} onChange={setProductionDate} />

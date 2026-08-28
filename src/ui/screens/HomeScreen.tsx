@@ -9,11 +9,11 @@ export function HomeScreen({ onNavigate }: Props) {
     <div className="home-grid">
       <button className="home-tile" onClick={() => onNavigate('write')}>
         <span className="icon">✏️</span>
-        <span className="label">Write</span>
+        <span className="label">Aanvullen</span>
       </button>
       <button className="home-tile" onClick={() => onNavigate('read')}>
         <span className="icon">📖</span>
-        <span className="label">Read</span>
+        <span className="label">Controleer</span>
       </button>
       <button className="home-tile" onClick={() => onNavigate('settings')}>
         <span className="icon">⚙️</span>

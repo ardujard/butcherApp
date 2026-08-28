@@ -5,8 +5,8 @@ import { ReadScreen } from './ui/read/ReadScreen'
 import { SettingsScreen } from './ui/settings/SettingsScreen'
 
 const TITLES: Record<Exclude<Screen, 'home'>, string> = {
-  write: 'Write',
-  read: 'Read',
+  write: 'Aanvullen',
+  read: 'Controleer',
   settings: 'Settings',
 }
 
