@@ -1,5 +1,6 @@
 import type { Label } from '../domain/types'
 import { getDB } from './db'
+import { newId } from './id'
 
 export async function listLabels(includeArchived = false): Promise<Label[]> {
   const db = await getDB()
@@ -9,7 +10,7 @@ export async function listLabels(includeArchived = false): Promise<Label[]> {
 
 export async function createLabel(name: string): Promise<Label> {
   const db = await getDB()
-  const label: Label = { id: crypto.randomUUID(), name, archived: false, createdAt: new Date().toISOString() }
+  const label: Label = { id: newId(), name, archived: false, createdAt: new Date().toISOString() }
   await db.add('labels', label)
   return label
 }

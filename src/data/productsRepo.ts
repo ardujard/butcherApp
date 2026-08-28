@@ -1,5 +1,6 @@
 import type { Category, Product } from '../domain/types'
 import { getDB } from './db'
+import { newId } from './id'
 
 export async function listProducts(includeArchived = false): Promise<Product[]> {
   const db = await getDB()
@@ -15,7 +16,7 @@ export async function getProduct(id: string): Promise<Product | undefined> {
 export async function createProduct(name: string, category: Category, labelId: string | null): Promise<Product> {
   const db = await getDB()
   const product: Product = {
-    id: crypto.randomUUID(),
+    id: newId(),
     name,
     category,
     labelId,
