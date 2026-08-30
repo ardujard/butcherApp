@@ -1,5 +1,7 @@
 import type { CheckpointPayload, DomainEvent, TopupPayload } from '../domain/types'
+import { checkForRelevance } from '../domain/retention'
 import { getDB } from './db'
+import { getProduct } from './productsRepo'
 
 export async function getEventsForProduct(productId: string): Promise<DomainEvent[]> {
   const db = await getDB()
@@ -30,7 +32,9 @@ export async function addTopup(productId: string, payload: TopupPayload): Promis
     payload,
   }
   const id = await db.add('events', event as DomainEvent)
-  return { ...event, id: id as number }
+  const result = { ...event, id: id as number }
+  await pruneEventHistory(productId)
+  return result
 }
 
 export async function addCheckpoint(productId: string, payload: CheckpointPayload): Promise<DomainEvent> {
@@ -42,7 +46,25 @@ export async function addCheckpoint(productId: string, payload: CheckpointPayloa
     payload,
   }
   const id = await db.add('events', event as DomainEvent)
-  return { ...event, id: id as number }
+  const result = { ...event, id: id as number }
+  await pruneEventHistory(productId)
+  return result
+}
+
+/** Triggered after every new entry: discards event history a full replay
+ * will never need again (see domain/retention.ts for what qualifies). */
+async function pruneEventHistory(productId: string): Promise<void> {
+  const product = await getProduct(productId)
+  if (!product) return
+
+  const events = await getEventsForProduct(productId)
+  const prunable = checkForRelevance(events, product.category)
+  if (prunable.length === 0) return
+
+  const db = await getDB()
+  const tx = db.transaction('events', 'readwrite')
+  await Promise.all(prunable.map((e) => tx.store.delete(e.id)))
+  await tx.done
 }
 
 export async function editEvent(id: number, payload: TopupPayload | CheckpointPayload): Promise<void> {

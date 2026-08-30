@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { resetDBForTests } from '../db'
+import { getDB, resetDBForTests } from '../db'
 import {
   addCheckpoint,
   addTopup,
@@ -11,7 +11,7 @@ import {
   recentProductionDates,
 } from '../eventsRepo'
 import { createProduct } from '../productsRepo'
-import type { TopupPayload } from '../../domain/types'
+import type { DomainEvent, TopupPayload } from '../../domain/types'
 
 beforeEach(async () => {
   await resetDBForTests()
@@ -64,6 +64,58 @@ describe('eventsRepo', () => {
 
     expect(await countEventsSince(product.id, '2000-01-01T00:00:00.000Z')).toBe(1)
     expect(await countEventsSince(product.id, '2999-01-01T00:00:00.000Z')).toBe(0)
+  })
+
+  it('prunes irrelevant history after a new entry is added', async () => {
+    const product = await createProduct('Kaasburger', 'discrete', null)
+    const db = await getDB()
+
+    // Seed old history directly, bypassing addTopup's own pruning trigger,
+    // so it's already in place before the pruning-triggering call below.
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: '1999-01-01T00:00:00.000Z',
+      payload: { productionDate: '1999-01-01', addedQty: 4 },
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: '2000-01-01T00:00:00.000Z',
+      payload: { productionDate: '2000-01-01', addedQty: 5, statedTotal: 5 }, // self-defining anchor
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: '2000-01-02T00:00:00.000Z',
+      payload: { productionDate: '2000-01-02', addedQty: 3 },
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+
+    await addTopup(product.id, { productionDate: '2026-08-30', addedQty: 2 })
+
+    const remaining = await getEventsForProduct(product.id)
+    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual([
+      '2000-01-01',
+      '2000-01-02',
+      '2026-08-30',
+    ])
+  })
+
+  it('does not prune anything when no anchor exists yet', async () => {
+    const product = await createProduct('Kaasburger', 'discrete', null)
+    const db = await getDB()
+
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: '1999-01-01T00:00:00.000Z',
+      payload: { productionDate: '1999-01-01', addedQty: 4 }, // no recount, never self-defining
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+
+    await addTopup(product.id, { productionDate: '2026-08-30', addedQty: 2 })
+
+    const remaining = await getEventsForProduct(product.id)
+    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual(['1999-01-01', '2026-08-30'])
   })
 
   it('surfaces the most recently used distinct production dates globally', async () => {
