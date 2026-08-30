@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { resetDBForTests } from '../db'
+import { getDB, resetDBForTests } from '../db'
 import {
   addCheckpoint,
   addTopup,
@@ -11,7 +11,7 @@ import {
   recentProductionDates,
 } from '../eventsRepo'
 import { createProduct } from '../productsRepo'
-import type { TopupPayload } from '../../domain/types'
+import type { DomainEvent, TopupPayload } from '../../domain/types'
 
 beforeEach(async () => {
   await resetDBForTests()
@@ -64,6 +64,34 @@ describe('eventsRepo', () => {
 
     expect(await countEventsSince(product.id, '2000-01-01T00:00:00.000Z')).toBe(1)
     expect(await countEventsSince(product.id, '2999-01-01T00:00:00.000Z')).toBe(0)
+  })
+
+  it('deletes a product\'s events older than 30 days when a new entry is logged', async () => {
+    const product = await createProduct('Kaasburger', 'discrete', null)
+    const db = await getDB()
+
+    const overThirtyDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
+    const underThirtyDaysAgo = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString()
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: overThirtyDaysAgo,
+      payload: { productionDate: overThirtyDaysAgo.slice(0, 10), addedQty: 4 },
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+    await db.add('events', {
+      productId: product.id,
+      type: 'topup',
+      recordedAt: underThirtyDaysAgo,
+      payload: { productionDate: underThirtyDaysAgo.slice(0, 10), addedQty: 3 },
+    } as Omit<DomainEvent, 'id'> as DomainEvent)
+
+    await addTopup(product.id, { productionDate: '2026-08-30', addedQty: 2 })
+
+    const remaining = await getEventsForProduct(product.id)
+    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual([
+      underThirtyDaysAgo.slice(0, 10),
+      '2026-08-30',
+    ])
   })
 
   it('surfaces the most recently used distinct production dates globally', async () => {
