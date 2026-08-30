@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LabelsAdmin } from './LabelsAdmin'
 import { ProductsAdmin } from './ProductsAdmin'
 import { BackupAdmin } from './BackupAdmin'
+import { APP_VERSION } from '../../version'
 
 type Tab = 'products' | 'labels' | 'backup'
 
@@ -22,6 +23,7 @@ export function SettingsScreen() {
         </button>
       </div>
       {tab === 'products' ? <ProductsAdmin /> : tab === 'labels' ? <LabelsAdmin /> : <BackupAdmin />}
+      <div className="app-version">{APP_VERSION}</div>
     </div>
   )
 }
