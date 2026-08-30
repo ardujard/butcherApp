@@ -27,17 +27,24 @@ describe('eventsRepo', () => {
     expect(events.map((e) => e.type)).toEqual(['topup', 'checkpoint'])
   })
 
-  it('soft-deletes and soft-edits without removing the record', async () => {
+  it('edits a record in place, keeping an editedAt marker', async () => {
     const product = await createProduct('Kaasburger', 'discrete', null)
     const event = await addTopup(product.id, { productionDate: '2026-08-21', addedQty: 20, statedTotal: 20 })
 
     await editEvent(event.id, { productionDate: '2026-08-21', addedQty: 18, statedTotal: 18 })
-    await deleteEvent(event.id)
 
     const [stored] = await getEventsForProduct(product.id)
-    expect(stored.deleted).toBe(true)
     expect(stored.editedAt).toBeDefined()
     expect((stored.payload as TopupPayload).addedQty).toBe(18)
+  })
+
+  it('permanently removes a record on delete', async () => {
+    const product = await createProduct('Kaasburger', 'discrete', null)
+    const event = await addTopup(product.id, { productionDate: '2026-08-21', addedQty: 20, statedTotal: 20 })
+
+    await deleteEvent(event.id)
+
+    expect(await getEventsForProduct(product.id)).toEqual([])
   })
 
   it('returns the most recent events first, capped at the given limit', async () => {

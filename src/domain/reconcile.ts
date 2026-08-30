@@ -4,7 +4,7 @@ import type { DomainEvent } from './types'
  * counts and bulk percentage-points aren't compatible units to replay
  * together. Repurpose by archiving and creating a new product instead. */
 export function isCategoryLocked(events: DomainEvent[]): boolean {
-  return events.some((e) => !e.deleted)
+  return events.length > 0
 }
 
 /** Bulk stock is a 0-100 percentage scale with no recount field to
@@ -19,7 +19,7 @@ export function wouldExceedFull(currentActiveSum: number, addedPct: number): boo
  * total field on write), so the UI uses this to nudge staff toward a
  * periodic recount. */
 export function daysSinceLastCheckpoint(events: DomainEvent[], from: Date = new Date()): number | null {
-  const checkpoints = events.filter((e) => !e.deleted && e.type === 'checkpoint')
+  const checkpoints = events.filter((e) => e.type === 'checkpoint')
   if (checkpoints.length === 0) return null
 
   const last = checkpoints.reduce((latest, e) => (e.recordedAt > latest.recordedAt ? e : latest))

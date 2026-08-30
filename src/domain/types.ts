@@ -34,8 +34,6 @@ export interface DomainEvent {
   productId: string
   type: EventType
   recordedAt: string // ISO datetime; fixes replay order, never edited
-  deleted: boolean
-  deletedAt?: string
   editedAt?: string
   payload: TopupPayload | CheckpointPayload
 }

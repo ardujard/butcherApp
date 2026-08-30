@@ -43,7 +43,7 @@ export function ReadScreen() {
   }
 
   const recentEntries = composition.events
-    .filter((e) => !e.deleted)
+    .slice()
     .sort((a, b) => (a.recordedAt < b.recordedAt ? 1 : a.recordedAt > b.recordedAt ? -1 : b.id - a.id))
     .slice(0, RECENT_ENTRIES_LIMIT)
 

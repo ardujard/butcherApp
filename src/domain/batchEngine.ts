@@ -39,12 +39,11 @@ function depleteFifo(batches: Record<string, number>, amount: number): number {
  * Replays a product's full event history into its current production-date
  * composition. Batches are keyed by production date (not entry order), so a
  * backdated top-up of forgotten old stock is correctly treated as old, even
- * though it was just entered. Nothing is ever pruned: a fully depleted batch
- * simply reaches qty 0 and disappears once filtered for display.
+ * though it was just entered. A fully depleted batch simply reaches qty 0
+ * and disappears once filtered for display.
  */
 export function replayEvents(events: DomainEvent[], category: Category): ReplayResult {
   const active = events
-    .filter((e) => !e.deleted)
     .slice()
     .sort((a, b) => (a.recordedAt < b.recordedAt ? -1 : a.recordedAt > b.recordedAt ? 1 : a.id - b.id))
 

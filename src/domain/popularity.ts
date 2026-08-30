@@ -8,5 +8,5 @@ import type { DomainEvent } from './types'
  */
 export function countRecentEvents(events: DomainEvent[], windowDays: number, from: Date = new Date()): number {
   const cutoff = from.getTime() - windowDays * 24 * 60 * 60 * 1000
-  return events.filter((e) => !e.deleted && new Date(e.recordedAt).getTime() >= cutoff).length
+  return events.filter((e) => new Date(e.recordedAt).getTime() >= cutoff).length
 }

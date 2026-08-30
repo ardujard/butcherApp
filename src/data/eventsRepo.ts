@@ -10,7 +10,6 @@ export async function getEventsForProduct(productId: string): Promise<DomainEven
 export async function getRecentEvents(productId: string, limit: number): Promise<DomainEvent[]> {
   const events = await getEventsForProduct(productId)
   return events
-    .filter((e) => !e.deleted)
     .sort((a, b) => (a.recordedAt < b.recordedAt ? 1 : a.recordedAt > b.recordedAt ? -1 : b.id - a.id))
     .slice(0, limit)
 }
@@ -28,7 +27,6 @@ export async function addTopup(productId: string, payload: TopupPayload): Promis
     productId,
     type: 'topup',
     recordedAt: new Date().toISOString(),
-    deleted: false,
     payload,
   }
   const id = await db.add('events', event as DomainEvent)
@@ -41,7 +39,6 @@ export async function addCheckpoint(productId: string, payload: CheckpointPayloa
     productId,
     type: 'checkpoint',
     recordedAt: new Date().toISOString(),
-    deleted: false,
     payload,
   }
   const id = await db.add('events', event as DomainEvent)
@@ -57,9 +54,7 @@ export async function editEvent(id: number, payload: TopupPayload | CheckpointPa
 
 export async function deleteEvent(id: number): Promise<void> {
   const db = await getDB()
-  const event = await db.get('events', id)
-  if (!event) throw new Error(`Event ${id} not found`)
-  await db.put('events', { ...event, deleted: true, deletedAt: new Date().toISOString() })
+  await db.delete('events', id)
 }
 
 /** The `limit` most recently used production dates across all products, for
@@ -73,7 +68,7 @@ export async function recentProductionDates(limit: number): Promise<string[]> {
 
   for (let i = events.length - 1; i >= 0 && dates.length < limit; i--) {
     const event = events[i]
-    if (event.deleted || event.type !== 'topup') continue
+    if (event.type !== 'topup') continue
     const date = (event.payload as TopupPayload).productionDate
     if (seen.has(date)) continue
     seen.add(date)

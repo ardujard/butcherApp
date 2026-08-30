@@ -15,7 +15,6 @@ function topup(
     productId: 'p1',
     type: 'topup',
     recordedAt,
-    deleted: false,
     payload: { productionDate, addedQty, statedTotal },
   }
 }
@@ -26,7 +25,6 @@ function bulkTopup(recordedAt: string, productionDate: string, addedPct: number)
     productId: 'p1',
     type: 'topup',
     recordedAt,
-    deleted: false,
     payload: { productionDate, addedPct },
   }
 }
@@ -37,7 +35,6 @@ function checkpoint(recordedAt: string, statedTotal: number): DomainEvent {
     productId: 'p1',
     type: 'checkpoint',
     recordedAt,
-    deleted: false,
     payload: { statedTotal },
   }
 }
@@ -124,15 +121,6 @@ describe('replayEvents (discrete)', () => {
     // checkpoint still says 10 was true, but only 4 was ever added -> 6 unattributed
     expect(result.batches[UNKNOWN_DATE]).toBe(6)
     expect(result.batches['2026-08-20']).toBe(4)
-  })
-
-  it('a soft-deleted event is excluded from replay', () => {
-    const events = [
-      topup('2026-08-20T08:00:00Z', '2026-08-20', 10, 10),
-      { ...topup('2026-08-21T08:00:00Z', '2026-08-21', 5, 15), deleted: true, deletedAt: '2026-08-22T00:00:00Z' },
-    ]
-    const result = replayEvents(events, 'discrete')
-    expect(activeComposition(result)).toEqual([{ date: '2026-08-20', qty: 10 }])
   })
 
   it('a zero-quantity top-up is a valid no-op', () => {

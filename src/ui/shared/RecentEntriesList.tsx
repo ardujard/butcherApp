@@ -25,6 +25,7 @@ export function RecentEntriesList({ product, events, onChanged }: Props) {
   const [editing, setEditing] = useState<DomainEvent | null>(null)
 
   async function handleDelete(event: DomainEvent) {
+    if (!window.confirm('Delete this entry? This cannot be undone.')) return
     await deleteEvent(event.id)
     onChanged()
   }
