@@ -94,7 +94,7 @@ export function ProductsAdmin() {
           <div className="field">
             <label>Category</label>
             <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-              <option value="discrete">Discrete (units)</option>
+              <option value="discrete">Telbaar</option>
               <option value="bulk">Bulk (percentage)</option>
             </select>
           </div>
@@ -139,7 +139,7 @@ export function ProductsAdmin() {
           </div>
           {category === 'discrete' && (
             <div className="field">
-              <label>Layer size (optional)</label>
+              <label>Laaggrootte (optioneel)</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -204,16 +204,16 @@ export function ProductsAdmin() {
                     min={1}
                     value={editLayerSize}
                     onChange={(e) => setEditLayerSize(e.target.value)}
-                    placeholder="Layer size"
+                    placeholder="Laaggrootte"
                   />
                 )}
               </div>
             ) : (
               <span>
-                {p.name} — {p.category === 'discrete' ? 'Units' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
+                {p.name} — {p.category === 'discrete' ? 'Telbaar' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
                 {p.sourceType === 'external' ? 'External' : 'In house'}
                 {p.sourceType !== 'external' && p.lifespanDays != null ? ` · Lifespan ${p.lifespanDays}d` : ''}
-                {p.layerSize != null ? ` · Layer of ${p.layerSize}` : ''}
+                {p.layerSize != null ? ` · Laag van ${p.layerSize}` : ''}
                 {p.archived ? ' (archived)' : ''}
               </span>
             )}

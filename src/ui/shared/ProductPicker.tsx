@@ -62,7 +62,7 @@ export function ProductPicker({ products, labels, onSelect }: Props) {
             <button key={p.id} className="product-card" onClick={() => onSelect(p)}>
               <span className="name">{p.name}</span>
               <span className="meta">
-                {p.labelName ?? 'No label'} · {p.category === 'discrete' ? 'Units' : 'Percentage'}
+                {p.labelName ?? 'No label'} · {p.category === 'discrete' ? 'Telbaar' : 'Percentage'}
               </span>
             </button>
           ))}

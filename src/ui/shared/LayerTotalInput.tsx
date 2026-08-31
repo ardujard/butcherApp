@@ -32,7 +32,7 @@ export function LayerTotalInput({ layerSize, value, onChange, label = 'Total amo
           onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         />
         <button type="button" className="link-button" onClick={() => setManual(false)}>
-          ⇄ use layers instead
+          ⇄ gebruik lagen
         </button>
       </div>
     )
@@ -44,7 +44,7 @@ export function LayerTotalInput({ layerSize, value, onChange, label = 'Total amo
     <div className="field">
       <label>{label}</label>
       <div className="layer-stepper-grid">
-        <span className="layer-stepper-label">Full layers ({layerSize}/layer)</span>
+        <span className="layer-stepper-label">Volle lagen ({layerSize}/laag)</span>
         <span className="layer-stepper-label">Loose extra</span>
         <div className="layer-stepper-controls">
           <button
