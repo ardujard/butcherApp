@@ -19,7 +19,7 @@ export async function createProduct(
   labelId: string | null,
   sourceType: SourceType = 'in house',
   lifespanDays: number | null = null,
-  rowSize: number | null = null,
+  layerSize: number | null = null,
 ): Promise<Product> {
   const db = await getDB()
   const product: Product = {
@@ -29,7 +29,7 @@ export async function createProduct(
     labelId,
     sourceType,
     lifespanDays,
-    rowSize,
+    layerSize,
     archived: false,
     createdAt: new Date().toISOString(),
   }
@@ -48,12 +48,12 @@ export async function updateProductSettings(
   id: string,
   sourceType: SourceType,
   lifespanDays: number | null,
-  rowSize: number | null,
+  layerSize: number | null,
 ): Promise<void> {
   const db = await getDB()
   const product = await db.get('products', id)
   if (!product) throw new Error(`Product ${id} not found`)
-  await db.put('products', { ...product, sourceType, lifespanDays, rowSize })
+  await db.put('products', { ...product, sourceType, lifespanDays, layerSize })
 }
 
 export async function archiveProduct(id: string): Promise<void> {

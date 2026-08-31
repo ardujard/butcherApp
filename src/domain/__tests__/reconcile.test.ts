@@ -3,8 +3,8 @@ import {
   addedFromLeftBefore,
   daysSinceLastCheckpoint,
   isCategoryLocked,
-  rowBreakdown,
-  totalFromRows,
+  layerBreakdown,
+  totalFromLayers,
   wouldExceedFull,
 } from '../reconcile'
 import type { DomainEvent } from '../types'
@@ -32,23 +32,23 @@ describe('wouldExceedFull', () => {
   })
 })
 
-describe('rowBreakdown', () => {
-  it('splits a total into full rows and a loose remainder', () => {
-    expect(rowBreakdown(19, 8)).toEqual({ rows: 2, extra: 3 })
+describe('layerBreakdown', () => {
+  it('splits a total into full layers and a loose remainder', () => {
+    expect(layerBreakdown(19, 8)).toEqual({ layers: 2, extra: 3 })
   })
 
-  it('handles an exact multiple of the row size', () => {
-    expect(rowBreakdown(16, 8)).toEqual({ rows: 2, extra: 0 })
+  it('handles an exact multiple of the layer size', () => {
+    expect(layerBreakdown(16, 8)).toEqual({ layers: 2, extra: 0 })
   })
 
-  it('handles a total smaller than one row', () => {
-    expect(rowBreakdown(3, 8)).toEqual({ rows: 0, extra: 3 })
+  it('handles a total smaller than one layer', () => {
+    expect(layerBreakdown(3, 8)).toEqual({ layers: 0, extra: 3 })
   })
 })
 
-describe('totalFromRows', () => {
-  it('recombines rows and extra back into a total', () => {
-    expect(totalFromRows(2, 3, 8)).toBe(19)
+describe('totalFromLayers', () => {
+  it('recombines layers and extra back into a total', () => {
+    expect(totalFromLayers(2, 3, 8)).toBe(19)
   })
 })
 

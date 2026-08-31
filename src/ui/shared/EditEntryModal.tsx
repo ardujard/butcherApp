@@ -3,7 +3,7 @@ import type { CheckpointPayload, DomainEvent, Product, TopupPayload } from '../.
 import { editEvent } from '../../data/eventsRepo'
 import { ProductionDateChips } from '../write/ProductionDateChips'
 import { BigButton } from './BigButton'
-import { RowTotalInput } from './RowTotalInput'
+import { LayerTotalInput } from './LayerTotalInput'
 
 const PERCENT_OPTIONS = [0, 25, 50, 75, 100]
 
@@ -66,17 +66,17 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
               <div className="field-row">
                 <div className="field">
                   <label>Added amount</label>
-                  {product.rowSize != null && (
-                    <span className="row-align-spacer" aria-hidden="true">
+                  {product.layerSize != null && (
+                    <span className="layer-align-spacer" aria-hidden="true">
                       &nbsp;
                     </span>
                   )}
                   <input type="number" value={addedQty} onChange={(e) => setAddedQty(e.target.value)} />
                 </div>
-                {product.rowSize != null ? (
-                  <RowTotalInput
+                {product.layerSize != null ? (
+                  <LayerTotalInput
                     label="Total amount"
-                    rowSize={product.rowSize}
+                    layerSize={product.layerSize}
                     value={statedTotal === '' ? null : Number(statedTotal)}
                     onChange={(total) => setStatedTotal(total == null ? '' : String(total))}
                   />

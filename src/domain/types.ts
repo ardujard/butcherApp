@@ -23,9 +23,9 @@ export interface Product {
    * product. */
   lifespanDays: number | null
   /** Standard batch size (e.g. a tray of 8 skewers) used to build up a
-   * top-up total as "2 rows + 3" instead of a raw count. Null means row
+   * top-up total as "2 layers + 3" instead of a raw count. Null means layer
    * entry isn't offered for this product. */
-  rowSize: number | null
+  layerSize: number | null
   archived: boolean
   createdAt: string
 }

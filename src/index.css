@@ -444,23 +444,23 @@ select {
   padding: 4px 0;
 }
 
-.row-stepper-grid {
+.layer-stepper-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px 16px;
 }
 
-.row-stepper-label {
+.layer-stepper-label {
   font-size: 14px;
   color: var(--text-muted);
 }
 
-.row-align-spacer {
+.layer-align-spacer {
   font-size: 14px;
   visibility: hidden;
 }
 
-.row-stepper-controls {
+.layer-stepper-controls {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -470,14 +470,14 @@ select {
   margin-top: 4px;
 }
 
-.row-stepper-value {
+.layer-stepper-value {
   min-width: 28px;
   text-align: center;
   font-size: 20px;
   font-weight: 700;
 }
 
-.row-stepper-total {
+.layer-stepper-total {
   font-size: 18px;
   font-weight: 600;
   margin: 4px 0 0;

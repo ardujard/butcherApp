@@ -21,14 +21,14 @@ export function ProductsAdmin() {
   const [labelId, setLabelId] = useState('')
   const [sourceType, setSourceType] = useState<SourceType>('in house')
   const [lifespanDays, setLifespanDays] = useState('')
-  const [rowSize, setRowSize] = useState('')
+  const [layerSize, setLayerSize] = useState('')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editLabelId, setEditLabelId] = useState('')
   const [editSourceType, setEditSourceType] = useState<SourceType>('in house')
   const [editLifespanDays, setEditLifespanDays] = useState('')
-  const [editRowSize, setEditRowSize] = useState('')
+  const [editLayerSize, setEditLayerSize] = useState('')
 
   const reload = useCallback(async () => {
     const [prods, labs] = await Promise.all([listProducts(true), listLabels()])
@@ -47,12 +47,12 @@ export function ProductsAdmin() {
       labelId || null,
       sourceType,
       lifespanDays === '' ? null : Number(lifespanDays),
-      rowSize === '' ? null : Number(rowSize),
+      layerSize === '' ? null : Number(layerSize),
     )
     setName('')
     setSourceType('in house')
     setLifespanDays('')
-    setRowSize('')
+    setLayerSize('')
     reload()
   }
 
@@ -63,7 +63,7 @@ export function ProductsAdmin() {
       id,
       editSourceType,
       editLifespanDays === '' ? null : Number(editLifespanDays),
-      editRowSize === '' ? null : Number(editRowSize),
+      editLayerSize === '' ? null : Number(editLayerSize),
     )
     setEditingId(null)
     reload()
@@ -139,13 +139,13 @@ export function ProductsAdmin() {
           </div>
           {category === 'discrete' && (
             <div className="field">
-              <label>Row size (optional)</label>
+              <label>Layer size (optional)</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min={1}
-                value={rowSize}
-                onChange={(e) => setRowSize(e.target.value)}
+                value={layerSize}
+                onChange={(e) => setLayerSize(e.target.value)}
                 placeholder="e.g. 8"
               />
             </div>
@@ -202,9 +202,9 @@ export function ProductsAdmin() {
                     type="number"
                     inputMode="numeric"
                     min={1}
-                    value={editRowSize}
-                    onChange={(e) => setEditRowSize(e.target.value)}
-                    placeholder="Row size"
+                    value={editLayerSize}
+                    onChange={(e) => setEditLayerSize(e.target.value)}
+                    placeholder="Layer size"
                   />
                 )}
               </div>
@@ -213,7 +213,7 @@ export function ProductsAdmin() {
                 {p.name} — {p.category === 'discrete' ? 'Units' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
                 {p.sourceType === 'external' ? 'External' : 'In house'}
                 {p.sourceType !== 'external' && p.lifespanDays != null ? ` · Lifespan ${p.lifespanDays}d` : ''}
-                {p.rowSize != null ? ` · Row of ${p.rowSize}` : ''}
+                {p.layerSize != null ? ` · Layer of ${p.layerSize}` : ''}
                 {p.archived ? ' (archived)' : ''}
               </span>
             )}
@@ -232,7 +232,7 @@ export function ProductsAdmin() {
                       setEditLabelId(p.labelId ?? '')
                       setEditSourceType(p.sourceType)
                       setEditLifespanDays(p.sourceType !== 'external' && p.lifespanDays != null ? String(p.lifespanDays) : '')
-                      setEditRowSize(p.rowSize != null ? String(p.rowSize) : '')
+                      setEditLayerSize(p.layerSize != null ? String(p.layerSize) : '')
                     }}
                     aria-label="Edit"
                   >

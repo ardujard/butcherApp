@@ -3,7 +3,7 @@ import type { Product, TopupPayload } from '../../domain/types'
 import { toISODate } from '../../domain/dates'
 import { addedFromLeftBefore } from '../../domain/reconcile'
 import { BigButton } from '../shared/BigButton'
-import { RowTotalInput } from '../shared/RowTotalInput'
+import { LayerTotalInput } from '../shared/LayerTotalInput'
 import { ProductionDateChips } from './ProductionDateChips'
 
 type InputMode = 'left-before' | 'added'
@@ -57,8 +57,8 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
         {mode === 'left-before' ? (
           <div className="field">
             <label>Left before topping up</label>
-            {product.rowSize != null && (
-              <span className="row-align-spacer" aria-hidden="true">
+            {product.layerSize != null && (
+              <span className="layer-align-spacer" aria-hidden="true">
                 &nbsp;
               </span>
             )}
@@ -76,8 +76,8 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
         ) : (
           <div className="field">
             <label>Added amount</label>
-            {product.rowSize != null && (
-              <span className="row-align-spacer" aria-hidden="true">
+            {product.layerSize != null && (
+              <span className="layer-align-spacer" aria-hidden="true">
                 &nbsp;
               </span>
             )}
@@ -93,8 +93,8 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
             </button>
           </div>
         )}
-        {product.rowSize != null ? (
-          <RowTotalInput rowSize={product.rowSize} value={totalAmount} onChange={setTotalAmount} />
+        {product.layerSize != null ? (
+          <LayerTotalInput layerSize={product.layerSize} value={totalAmount} onChange={setTotalAmount} />
         ) : (
           <div className="field">
             <label>Total amount now in counter</label>

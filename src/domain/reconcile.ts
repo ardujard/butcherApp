@@ -14,15 +14,15 @@ export function wouldExceedFull(currentActiveSum: number, addedPct: number): boo
   return currentActiveSum + addedPct > 100
 }
 
-/** Decomposes a total into rows of a fixed size plus a loose remainder, so
- * staff can build up a count like "2 rows + 3" instead of counting stock one
- * by one. */
-export function rowBreakdown(total: number, rowSize: number): { rows: number; extra: number } {
-  return { rows: Math.floor(total / rowSize), extra: total % rowSize }
+/** Decomposes a total into layers of a fixed size plus a loose remainder, so
+ * staff can build up a count like "2 layers + 3" instead of counting stock
+ * one by one. */
+export function layerBreakdown(total: number, layerSize: number): { layers: number; extra: number } {
+  return { layers: Math.floor(total / layerSize), extra: total % layerSize }
 }
 
-export function totalFromRows(rows: number, extra: number, rowSize: number): number {
-  return rows * rowSize + extra
+export function totalFromLayers(layers: number, extra: number, layerSize: number): number {
+  return layers * layerSize + extra
 }
 
 /** Amount added, inferred from how many were left before the top-up and the
