@@ -56,7 +56,7 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
       <div className="field-row">
         {mode === 'left-before' ? (
           <div className="field">
-            <label>Left before topping up</label>
+            <label>Hoeveelheid voor aangevullen</label>
             {product.layerSize != null && (
               <span className="layer-align-spacer" aria-hidden="true">
                 &nbsp;
@@ -75,7 +75,7 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
           </div>
         ) : (
           <div className="field">
-            <label>Added amount</label>
+            <label>Hoeveelheid aangevuld</label>
             {product.layerSize != null && (
               <span className="layer-align-spacer" aria-hidden="true">
                 &nbsp;
@@ -97,7 +97,7 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
           <LayerTotalInput layerSize={product.layerSize} value={totalAmount} onChange={setTotalAmount} />
         ) : (
           <div className="field">
-            <label>Total amount now in counter</label>
+            <label>Totaal hoeveelheid na aanvullen</label>
             <input
               type="number"
               inputMode="numeric"
