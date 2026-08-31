@@ -356,6 +356,28 @@ select {
   border-color: var(--accent);
 }
 
+.pct-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pct-slider-row input[type='range'] {
+  flex: 1;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.pct-slider-value {
+  min-width: 48px;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 600;
+}
+
 .actions-row {
   display: flex;
   gap: 12px;

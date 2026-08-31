@@ -5,7 +5,8 @@ import { wouldExceedFull } from '../../domain/reconcile'
 import { BigButton } from '../shared/BigButton'
 import { ProductionDateChips } from './ProductionDateChips'
 
-const PERCENT_OPTIONS = [0, 25, 50, 75, 100]
+const PERCENT_OPTIONS = [25, 50, 75, 100]
+const SLIDER_STEP = 5
 
 interface Props {
   product: Product
@@ -16,6 +17,7 @@ interface Props {
 export function TopupFormBulk({ product, currentTotal, onSubmit }: Props) {
   const [productionDate, setProductionDate] = useState(() => toISODate(new Date()))
   const [addedPct, setAddedPct] = useState<number | null>(null)
+  const [showSlider, setShowSlider] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const overflow = addedPct != null && wouldExceedFull(currentTotal, addedPct)
@@ -27,6 +29,7 @@ export function TopupFormBulk({ product, currentTotal, onSubmit }: Props) {
     try {
       await onSubmit({ productionDate, addedPct })
       setAddedPct(null)
+      setShowSlider(false)
     } finally {
       setSubmitting(false)
     }
@@ -49,6 +52,22 @@ export function TopupFormBulk({ product, currentTotal, onSubmit }: Props) {
             </button>
           ))}
         </div>
+        <button type="button" className="link-button" onClick={() => setShowSlider(!showSlider)}>
+          ⇄ {showSlider ? 'hide fine-tune slider' : 'fine-tune percentage'}
+        </button>
+        {showSlider && (
+          <div className="pct-slider-row">
+            <input
+              type="range"
+              min={SLIDER_STEP}
+              max={100}
+              step={SLIDER_STEP}
+              value={addedPct ?? 50}
+              onChange={(e) => setAddedPct(Number(e.target.value))}
+            />
+            <span className="pct-slider-value">{addedPct ?? 50}%</span>
+          </div>
+        )}
       </div>
       {overflow && (
         <div className="warning-banner">
