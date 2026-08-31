@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { daysSinceLastCheckpoint, isCategoryLocked, wouldExceedFull } from '../reconcile'
+import {
+  addedFromLeftBefore,
+  daysSinceLastCheckpoint,
+  isCategoryLocked,
+  rowBreakdown,
+  totalFromRows,
+  wouldExceedFull,
+} from '../reconcile'
 import type { DomainEvent } from '../types'
 
 describe('isCategoryLocked', () => {
@@ -22,6 +29,36 @@ describe('wouldExceedFull', () => {
 
   it('allows a top-up landing exactly at 100%', () => {
     expect(wouldExceedFull(75, 25)).toBe(false)
+  })
+})
+
+describe('rowBreakdown', () => {
+  it('splits a total into full rows and a loose remainder', () => {
+    expect(rowBreakdown(19, 8)).toEqual({ rows: 2, extra: 3 })
+  })
+
+  it('handles an exact multiple of the row size', () => {
+    expect(rowBreakdown(16, 8)).toEqual({ rows: 2, extra: 0 })
+  })
+
+  it('handles a total smaller than one row', () => {
+    expect(rowBreakdown(3, 8)).toEqual({ rows: 0, extra: 3 })
+  })
+})
+
+describe('totalFromRows', () => {
+  it('recombines rows and extra back into a total', () => {
+    expect(totalFromRows(2, 3, 8)).toBe(19)
+  })
+})
+
+describe('addedFromLeftBefore', () => {
+  it('infers the added amount from what was left and the new total', () => {
+    expect(addedFromLeftBefore(15, 3)).toBe(12)
+  })
+
+  it('goes negative when the new total is less than what was left', () => {
+    expect(addedFromLeftBefore(2, 3)).toBe(-1)
   })
 })
 

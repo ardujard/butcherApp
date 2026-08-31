@@ -49,7 +49,12 @@ export function ReadScreen() {
 
   return (
     <div>
-      <button className="back-button" onClick={() => setSelected(null)} aria-label="Back to product list">
+      <button
+        className="back-button"
+        style={{ marginBottom: 16 }}
+        onClick={() => setSelected(null)}
+        aria-label="Back to product list"
+      >
         ←
       </button>
       <CompositionView

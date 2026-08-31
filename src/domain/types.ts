@@ -22,6 +22,10 @@ export interface Product {
    * exceeded on the control page. Null means lifespan isn't tracked for this
    * product. */
   lifespanDays: number | null
+  /** Standard batch size (e.g. a tray of 8 skewers) used to build up a
+   * top-up total as "2 rows + 3" instead of a raw count. Null means row
+   * entry isn't offered for this product. */
+  rowSize: number | null
   archived: boolean
   createdAt: string
 }

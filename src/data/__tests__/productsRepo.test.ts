@@ -6,7 +6,7 @@ import {
   listProducts,
   renameProduct,
   restoreProduct,
-  updateProductSourcing,
+  updateProductSettings,
 } from '../productsRepo'
 
 beforeEach(async () => {
@@ -38,23 +38,26 @@ describe('productsRepo', () => {
     expect(updated.labelId).toBe('label-1')
   })
 
-  it('defaults new products to in-house with no lifespan tracked', async () => {
+  it('defaults new products to in-house with no lifespan or row size tracked', async () => {
     const product = await createProduct('Sauce', 'bulk', null)
     expect(product.sourceType).toBe('in house')
     expect(product.lifespanDays).toBeNull()
+    expect(product.rowSize).toBeNull()
   })
 
-  it('creates a product with an explicit source type and lifespan', async () => {
-    const product = await createProduct('Cheese', 'discrete', null, 'external', 5)
+  it('creates a product with an explicit source type, lifespan, and row size', async () => {
+    const product = await createProduct('Cheese', 'discrete', null, 'external', 5, 8)
     expect(product.sourceType).toBe('external')
     expect(product.lifespanDays).toBe(5)
+    expect(product.rowSize).toBe(8)
   })
 
-  it('updates a product source type and lifespan', async () => {
+  it('updates a product source type, lifespan, and row size', async () => {
     const product = await createProduct('Sausages', 'discrete', null)
-    await updateProductSourcing(product.id, 'external', null)
+    await updateProductSettings(product.id, 'external', null, 12)
     const [updated] = await listProducts()
     expect(updated.sourceType).toBe('external')
     expect(updated.lifespanDays).toBeNull()
+    expect(updated.rowSize).toBe(12)
   })
 })

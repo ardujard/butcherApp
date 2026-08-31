@@ -14,6 +14,25 @@ export function wouldExceedFull(currentActiveSum: number, addedPct: number): boo
   return currentActiveSum + addedPct > 100
 }
 
+/** Decomposes a total into rows of a fixed size plus a loose remainder, so
+ * staff can build up a count like "2 rows + 3" instead of counting stock one
+ * by one. */
+export function rowBreakdown(total: number, rowSize: number): { rows: number; extra: number } {
+  return { rows: Math.floor(total / rowSize), extra: total % rowSize }
+}
+
+export function totalFromRows(rows: number, extra: number, rowSize: number): number {
+  return rows * rowSize + extra
+}
+
+/** Amount added, inferred from how many were left before the top-up and the
+ * recounted total after — the alternative to counting freshly-added stock
+ * directly, which is awkward for items like skewers or sausages. Can go
+ * negative if the entered numbers don't add up, which callers should flag. */
+export function addedFromLeftBefore(total: number, leftBefore: number): number {
+  return total - leftBefore
+}
+
 /** Days since a product's last checkpoint recount, or null if it has never
  * had one. Bulk products drift faster than discrete ones (no self-correcting
  * total field on write), so the UI uses this to nudge staff toward a

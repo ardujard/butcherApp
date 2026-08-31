@@ -6,7 +6,7 @@ import {
   listProducts,
   renameProduct,
   restoreProduct,
-  updateProductSourcing,
+  updateProductSettings,
 } from '../../data/productsRepo'
 import { listLabels } from '../../data/labelsRepo'
 import { BigButton } from '../shared/BigButton'
@@ -21,12 +21,14 @@ export function ProductsAdmin() {
   const [labelId, setLabelId] = useState('')
   const [sourceType, setSourceType] = useState<SourceType>('in house')
   const [lifespanDays, setLifespanDays] = useState('')
+  const [rowSize, setRowSize] = useState('')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editLabelId, setEditLabelId] = useState('')
   const [editSourceType, setEditSourceType] = useState<SourceType>('in house')
   const [editLifespanDays, setEditLifespanDays] = useState('')
+  const [editRowSize, setEditRowSize] = useState('')
 
   const reload = useCallback(async () => {
     const [prods, labs] = await Promise.all([listProducts(true), listLabels()])
@@ -45,17 +47,24 @@ export function ProductsAdmin() {
       labelId || null,
       sourceType,
       lifespanDays === '' ? null : Number(lifespanDays),
+      rowSize === '' ? null : Number(rowSize),
     )
     setName('')
     setSourceType('in house')
     setLifespanDays('')
+    setRowSize('')
     reload()
   }
 
   async function handleSaveEdit(id: string) {
     if (!editName.trim()) return
     await renameProduct(id, editName.trim(), editLabelId || null)
-    await updateProductSourcing(id, editSourceType, editLifespanDays === '' ? null : Number(editLifespanDays))
+    await updateProductSettings(
+      id,
+      editSourceType,
+      editLifespanDays === '' ? null : Number(editLifespanDays),
+      editRowSize === '' ? null : Number(editRowSize),
+    )
     setEditingId(null)
     reload()
   }
@@ -120,6 +129,19 @@ export function ProductsAdmin() {
               placeholder="e.g. 3"
             />
           </div>
+          {category === 'discrete' && (
+            <div className="field">
+              <label>Row size (optional)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={rowSize}
+                onChange={(e) => setRowSize(e.target.value)}
+                placeholder="e.g. 8"
+              />
+            </div>
+          )}
         </div>
         <div className="actions-row">
           <BigButton variant="primary" onClick={handleAdd} disabled={!name.trim()}>
@@ -159,12 +181,23 @@ export function ProductsAdmin() {
                   onChange={(e) => setEditLifespanDays(e.target.value)}
                   placeholder="Lifespan (days)"
                 />
+                {p.category === 'discrete' && (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    value={editRowSize}
+                    onChange={(e) => setEditRowSize(e.target.value)}
+                    placeholder="Row size"
+                  />
+                )}
               </div>
             ) : (
               <span>
                 {p.name} — {p.category === 'discrete' ? 'Units' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
                 {p.sourceType === 'external' ? 'External' : 'In house'}
                 {p.sourceType !== 'external' && p.lifespanDays != null ? ` · Lifespan ${p.lifespanDays}d` : ''}
+                {p.rowSize != null ? ` · Row of ${p.rowSize}` : ''}
                 {p.archived ? ' (archived)' : ''}
               </span>
             )}
@@ -183,6 +216,7 @@ export function ProductsAdmin() {
                       setEditLabelId(p.labelId ?? '')
                       setEditSourceType(p.sourceType)
                       setEditLifespanDays(p.lifespanDays != null ? String(p.lifespanDays) : '')
+                      setEditRowSize(p.rowSize != null ? String(p.rowSize) : '')
                     }}
                     aria-label="Edit"
                   >

@@ -50,14 +50,19 @@ export function getDB(): Promise<IDBPDatabase<ButcherAppDB>> {
         }
 
         if (oldVersion < 2) {
-          // Backfill sourceType/lifespanDays onto products stored before
-          // these fields existed, so the rest of the app never has to treat
-          // a missing sourceType as an implicit default.
+          // Backfill sourceType/lifespanDays/rowSize onto products stored
+          // before these fields existed, so the rest of the app never has to
+          // treat a missing sourceType as an implicit default.
           let cursor = await transaction.objectStore('products').openCursor()
           while (cursor) {
             const product = cursor.value
             if (product.sourceType == null) {
-              await cursor.update({ ...product, sourceType: 'in house', lifespanDays: product.lifespanDays ?? null })
+              await cursor.update({
+                ...product,
+                sourceType: 'in house',
+                lifespanDays: product.lifespanDays ?? null,
+                rowSize: product.rowSize ?? null,
+              })
             }
             cursor = await cursor.continue()
           }

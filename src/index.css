@@ -431,6 +431,58 @@ select {
   margin: -4px 0 12px;
 }
 
+.link-button {
+  align-self: flex-start;
+  min-height: 32px;
+  margin-top: auto;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.row-stepper-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+
+.row-stepper-label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.row-align-spacer {
+  font-size: 14px;
+  visibility: hidden;
+}
+
+.row-stepper-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* .icon-button is 44px tall vs. a .field input's 52px min-height; nudge
+     down by half the difference so this row's center lines up with an
+     adjacent plain input's center. */
+  margin-top: 4px;
+}
+
+.row-stepper-value {
+  min-width: 28px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.row-stepper-total {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
 /* Recent entries / edit list */
 .entry-list {
   display: flex;

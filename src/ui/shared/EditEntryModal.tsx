@@ -3,6 +3,7 @@ import type { CheckpointPayload, DomainEvent, Product, TopupPayload } from '../.
 import { editEvent } from '../../data/eventsRepo'
 import { ProductionDateChips } from '../write/ProductionDateChips'
 import { BigButton } from './BigButton'
+import { RowTotalInput } from './RowTotalInput'
 
 const PERCENT_OPTIONS = [0, 25, 50, 75, 100]
 
@@ -65,12 +66,26 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
               <div className="field-row">
                 <div className="field">
                   <label>Added amount</label>
+                  {product.rowSize != null && (
+                    <span className="row-align-spacer" aria-hidden="true">
+                      &nbsp;
+                    </span>
+                  )}
                   <input type="number" value={addedQty} onChange={(e) => setAddedQty(e.target.value)} />
                 </div>
-                <div className="field">
-                  <label>Total amount</label>
-                  <input type="number" value={statedTotal} onChange={(e) => setStatedTotal(e.target.value)} />
-                </div>
+                {product.rowSize != null ? (
+                  <RowTotalInput
+                    label="Total amount"
+                    rowSize={product.rowSize}
+                    value={statedTotal === '' ? null : Number(statedTotal)}
+                    onChange={(total) => setStatedTotal(total == null ? '' : String(total))}
+                  />
+                ) : (
+                  <div className="field">
+                    <label>Total amount</label>
+                    <input type="number" value={statedTotal} onChange={(e) => setStatedTotal(e.target.value)} />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="pct-grid">
