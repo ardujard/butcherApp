@@ -113,7 +113,14 @@ export function ProductsAdmin() {
         <div className="field-row">
           <div className="field">
             <label>Source</label>
-            <select value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
+            <select
+              value={sourceType}
+              onChange={(e) => {
+                const next = e.target.value as SourceType
+                setSourceType(next)
+                if (next === 'external') setLifespanDays('')
+              }}
+            >
               <option value="in house">In house</option>
               <option value="external">External</option>
             </select>
@@ -127,6 +134,7 @@ export function ProductsAdmin() {
               value={lifespanDays}
               onChange={(e) => setLifespanDays(e.target.value)}
               placeholder="e.g. 3"
+              disabled={sourceType === 'external'}
             />
           </div>
           {category === 'discrete' && (
@@ -169,7 +177,14 @@ export function ProductsAdmin() {
                     </option>
                   ))}
                 </select>
-                <select value={editSourceType} onChange={(e) => setEditSourceType(e.target.value as SourceType)}>
+                <select
+                  value={editSourceType}
+                  onChange={(e) => {
+                    const next = e.target.value as SourceType
+                    setEditSourceType(next)
+                    if (next === 'external') setEditLifespanDays('')
+                  }}
+                >
                   <option value="in house">In house</option>
                   <option value="external">External</option>
                 </select>
@@ -180,6 +195,7 @@ export function ProductsAdmin() {
                   value={editLifespanDays}
                   onChange={(e) => setEditLifespanDays(e.target.value)}
                   placeholder="Lifespan (days)"
+                  disabled={editSourceType === 'external'}
                 />
                 {p.category === 'discrete' && (
                   <input
@@ -215,7 +231,7 @@ export function ProductsAdmin() {
                       setEditName(p.name)
                       setEditLabelId(p.labelId ?? '')
                       setEditSourceType(p.sourceType)
-                      setEditLifespanDays(p.lifespanDays != null ? String(p.lifespanDays) : '')
+                      setEditLifespanDays(p.sourceType !== 'external' && p.lifespanDays != null ? String(p.lifespanDays) : '')
                       setEditRowSize(p.rowSize != null ? String(p.rowSize) : '')
                     }}
                     aria-label="Edit"
