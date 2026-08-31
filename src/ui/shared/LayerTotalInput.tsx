@@ -14,7 +14,7 @@ interface Props {
  * (skewers, sausages). Fully controlled: decomposes whatever `value` it's
  * given into layers/extra, so it works the same for a fresh top-up as for
  * editing an existing entry. */
-export function LayerTotalInput({ layerSize, value, onChange, label = 'Totaal hoeveelheid na aanvullen' }: Props) {
+export function LayerTotalInput({ layerSize, value, onChange, label = 'Totale hoeveelheid na aanvullen' }: Props) {
   const [manual, setManual] = useState(false)
 
   if (manual) {

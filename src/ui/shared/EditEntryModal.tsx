@@ -65,7 +65,7 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
             {product.category === 'discrete' ? (
               <div className="field-row">
                 <div className="field">
-                  <label>Hoeveelheid aangevuld</label>
+                  <label>Aangevulde hoeveelheid</label>
                   {product.layerSize != null && (
                     <span className="layer-align-spacer" aria-hidden="true">
                       &nbsp;
