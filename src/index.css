@@ -7,6 +7,7 @@
   --accent: #1f6f50;
   --accent-contrast: #ffffff;
   --danger: #b3261e;
+  --danger-bg: #fbe4e1;
   --warning: #92620a;
   --warning-bg: #fdf1d8;
   --success: #1f6f50;
@@ -34,6 +35,7 @@
     --accent: #3fae82;
     --accent-contrast: #0b120f;
     --danger: #ff6b63;
+    --danger-bg: #3a1613;
     --warning: #e8b33d;
     --warning-bg: #3a300f;
     --success: #3fae82;
@@ -406,6 +408,27 @@ select {
 .composition-row.oldest {
   border-color: var(--warning);
   background: var(--warning-bg);
+}
+
+.composition-row.lifespan-ok {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.composition-row.lifespan-warning {
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.composition-row.lifespan-exceeded {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.hint-note {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: -4px 0 12px;
 }
 
 /* Recent entries / edit list */

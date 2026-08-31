@@ -53,7 +53,11 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
           />
         </div>
       </div>
-      <ProductionDateChips value={productionDate} onChange={setProductionDate} />
+      <ProductionDateChips
+        value={productionDate}
+        onChange={setProductionDate}
+        mode={product.sourceType === 'external' ? 'goodTill' : 'production'}
+      />
       <div className="actions-row">
         <BigButton variant="primary" disabled={!canSubmit} onClick={handleSubmit}>
           Log top-up

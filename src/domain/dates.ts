@@ -24,6 +24,17 @@ export function lastNDays(n: number, from: Date = new Date()): string[] {
   return Array.from({ length: n }, (_, i) => addDays(today, -i))
 }
 
+/** Next `n` calendar days including today, soonest first. */
+export function nextNDays(n: number, from: Date = new Date()): string[] {
+  const today = toISODate(from)
+  return Array.from({ length: n }, (_, i) => addDays(today, i))
+}
+
+/** Whole calendar days from `startISO` to `endISO` (positive if `endISO` is later). */
+export function daysBetween(startISO: string, endISO: string): number {
+  return Math.round((atUTCMidnight(endISO).getTime() - atUTCMidnight(startISO).getTime()) / DAY_MS)
+}
+
 export function relativeDayLabel(dateISO: string, from: Date = new Date()): string {
   const today = toISODate(from)
   const diffDays = Math.round((atUTCMidnight(dateISO).getTime() - atUTCMidnight(today).getTime()) / DAY_MS)

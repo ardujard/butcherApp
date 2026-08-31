@@ -56,7 +56,11 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
         <h3>Edit entry</h3>
         {isTopup && (
           <>
-            <ProductionDateChips value={productionDate} onChange={setProductionDate} />
+            <ProductionDateChips
+              value={productionDate}
+              onChange={setProductionDate}
+              mode={product.sourceType === 'external' ? 'goodTill' : 'production'}
+            />
             {product.category === 'discrete' ? (
               <div className="field-row">
                 <div className="field">

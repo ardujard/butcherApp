@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { resetDBForTests } from '../db'
-import { archiveProduct, createProduct, listProducts, renameProduct, restoreProduct } from '../productsRepo'
+import {
+  archiveProduct,
+  createProduct,
+  listProducts,
+  renameProduct,
+  restoreProduct,
+  updateProductSourcing,
+} from '../productsRepo'
 
 beforeEach(async () => {
   await resetDBForTests()
@@ -29,5 +36,25 @@ describe('productsRepo', () => {
     const [updated] = await listProducts()
     expect(updated.name).toBe('Spaghetti sauce')
     expect(updated.labelId).toBe('label-1')
+  })
+
+  it('defaults new products to in-house with no lifespan tracked', async () => {
+    const product = await createProduct('Sauce', 'bulk', null)
+    expect(product.sourceType).toBe('in house')
+    expect(product.lifespanDays).toBeNull()
+  })
+
+  it('creates a product with an explicit source type and lifespan', async () => {
+    const product = await createProduct('Cheese', 'discrete', null, 'external', 5)
+    expect(product.sourceType).toBe('external')
+    expect(product.lifespanDays).toBe(5)
+  })
+
+  it('updates a product source type and lifespan', async () => {
+    const product = await createProduct('Sausages', 'discrete', null)
+    await updateProductSourcing(product.id, 'external', null)
+    const [updated] = await listProducts()
+    expect(updated.sourceType).toBe('external')
+    expect(updated.lifespanDays).toBeNull()
   })
 })

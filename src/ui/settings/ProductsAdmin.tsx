@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Category, Label, Product } from '../../domain/types'
-import { archiveProduct, createProduct, listProducts, renameProduct, restoreProduct } from '../../data/productsRepo'
+import type { Category, Label, Product, SourceType } from '../../domain/types'
+import {
+  archiveProduct,
+  createProduct,
+  listProducts,
+  renameProduct,
+  restoreProduct,
+  updateProductSourcing,
+} from '../../data/productsRepo'
 import { listLabels } from '../../data/labelsRepo'
 import { BigButton } from '../shared/BigButton'
 
@@ -12,10 +19,14 @@ export function ProductsAdmin() {
   const [name, setName] = useState('')
   const [category, setCategory] = useState<Category>('discrete')
   const [labelId, setLabelId] = useState('')
+  const [sourceType, setSourceType] = useState<SourceType>('in house')
+  const [lifespanDays, setLifespanDays] = useState('')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editLabelId, setEditLabelId] = useState('')
+  const [editSourceType, setEditSourceType] = useState<SourceType>('in house')
+  const [editLifespanDays, setEditLifespanDays] = useState('')
 
   const reload = useCallback(async () => {
     const [prods, labs] = await Promise.all([listProducts(true), listLabels()])
@@ -28,14 +39,23 @@ export function ProductsAdmin() {
 
   async function handleAdd() {
     if (!name.trim()) return
-    await createProduct(name.trim(), category, labelId || null)
+    await createProduct(
+      name.trim(),
+      category,
+      labelId || null,
+      sourceType,
+      lifespanDays === '' ? null : Number(lifespanDays),
+    )
     setName('')
+    setSourceType('in house')
+    setLifespanDays('')
     reload()
   }
 
   async function handleSaveEdit(id: string) {
     if (!editName.trim()) return
     await renameProduct(id, editName.trim(), editLabelId || null)
+    await updateProductSourcing(id, editSourceType, editLifespanDays === '' ? null : Number(editLifespanDays))
     setEditingId(null)
     reload()
   }
@@ -81,6 +101,26 @@ export function ProductsAdmin() {
             </select>
           </div>
         </div>
+        <div className="field-row">
+          <div className="field">
+            <label>Source</label>
+            <select value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
+              <option value="in house">In house</option>
+              <option value="external">External</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Lifespan (days, optional)</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={lifespanDays}
+              onChange={(e) => setLifespanDays(e.target.value)}
+              placeholder="e.g. 3"
+            />
+          </div>
+        </div>
         <div className="actions-row">
           <BigButton variant="primary" onClick={handleAdd} disabled={!name.trim()}>
             Add product
@@ -107,10 +147,24 @@ export function ProductsAdmin() {
                     </option>
                   ))}
                 </select>
+                <select value={editSourceType} onChange={(e) => setEditSourceType(e.target.value as SourceType)}>
+                  <option value="in house">In house</option>
+                  <option value="external">External</option>
+                </select>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={editLifespanDays}
+                  onChange={(e) => setEditLifespanDays(e.target.value)}
+                  placeholder="Lifespan (days)"
+                />
               </div>
             ) : (
               <span>
-                {p.name} — {p.category === 'discrete' ? 'Units' : 'Percentage'} · {labelName(p.labelId)}
+                {p.name} — {p.category === 'discrete' ? 'Units' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
+                {p.sourceType === 'external' ? 'External' : 'In house'}
+                {p.sourceType !== 'external' && p.lifespanDays != null ? ` · Lifespan ${p.lifespanDays}d` : ''}
                 {p.archived ? ' (archived)' : ''}
               </span>
             )}
@@ -127,6 +181,8 @@ export function ProductsAdmin() {
                       setEditingId(p.id)
                       setEditName(p.name)
                       setEditLabelId(p.labelId ?? '')
+                      setEditSourceType(p.sourceType)
+                      setEditLifespanDays(p.lifespanDays != null ? String(p.lifespanDays) : '')
                     }}
                     aria-label="Edit"
                   >

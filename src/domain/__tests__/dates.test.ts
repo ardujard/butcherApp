@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, lastNDays, relativeDayLabel } from '../dates'
+import { addDays, daysBetween, lastNDays, nextNDays, relativeDayLabel } from '../dates'
 
 describe('addDays', () => {
   it('adds and subtracts days across month boundaries', () => {
@@ -12,6 +12,23 @@ describe('lastNDays', () => {
   it('returns the last n days newest first, including today', () => {
     const days = lastNDays(7, new Date('2026-08-23T12:00:00Z'))
     expect(days).toEqual(['2026-08-23', '2026-08-22', '2026-08-21', '2026-08-20', '2026-08-19', '2026-08-18', '2026-08-17'])
+  })
+})
+
+describe('nextNDays', () => {
+  it('returns the next n days soonest first, including today', () => {
+    const days = nextNDays(4, new Date('2026-08-23T12:00:00Z'))
+    expect(days).toEqual(['2026-08-23', '2026-08-24', '2026-08-25', '2026-08-26'])
+  })
+})
+
+describe('daysBetween', () => {
+  it('counts whole days from start to end', () => {
+    expect(daysBetween('2026-08-20', '2026-08-23')).toBe(3)
+  })
+
+  it('is negative when end is before start', () => {
+    expect(daysBetween('2026-08-23', '2026-08-20')).toBe(-3)
   })
 })
 

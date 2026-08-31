@@ -86,6 +86,7 @@ export async function deleteEvent(id: number): Promise<void> {
  * the global quick-pick chips (the same date is usually reused across
  * several products logged on the same working day). */
 export async function recentProductionDates(limit: number): Promise<string[]> {
+  if (limit <= 0) return []
   const db = await getDB()
   const events = await db.getAllFromIndex('events', 'by-recordedAt')
   const dates: string[] = []

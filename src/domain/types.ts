@@ -1,5 +1,10 @@
 export type Category = 'discrete' | 'bulk'
 
+/** Whether a product is made on-site (tracked by production date, FIFO
+ * batches) or brought in from outside (tracked by a good-till date instead —
+ * it has no "made here" date to sort by). */
+export type SourceType = 'in house' | 'external'
+
 export interface Label {
   id: string
   name: string
@@ -12,6 +17,11 @@ export interface Product {
   name: string
   category: Category
   labelId: string | null
+  sourceType: SourceType
+  /** Days of shelf life from production date before stock is flagged as
+   * exceeded on the control page. Null means lifespan isn't tracked for this
+   * product. */
+  lifespanDays: number | null
   archived: boolean
   createdAt: string
 }
@@ -19,7 +29,7 @@ export interface Product {
 export type EventType = 'topup' | 'checkpoint'
 
 export interface TopupPayload {
-  productionDate: string // 'YYYY-MM-DD'
+  productionDate: string // 'YYYY-MM-DD'; for external products this holds the good-till date instead
   addedQty?: number // discrete category, raw units
   addedPct?: number // bulk category, percentage points 0-100
   statedTotal?: number // discrete category only: post-add recount

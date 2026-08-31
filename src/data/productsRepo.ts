@@ -1,4 +1,4 @@
-import type { Category, Product } from '../domain/types'
+import type { Category, Product, SourceType } from '../domain/types'
 import { getDB } from './db'
 import { newId } from './id'
 
@@ -13,13 +13,21 @@ export async function getProduct(id: string): Promise<Product | undefined> {
   return db.get('products', id)
 }
 
-export async function createProduct(name: string, category: Category, labelId: string | null): Promise<Product> {
+export async function createProduct(
+  name: string,
+  category: Category,
+  labelId: string | null,
+  sourceType: SourceType = 'in house',
+  lifespanDays: number | null = null,
+): Promise<Product> {
   const db = await getDB()
   const product: Product = {
     id: newId(),
     name,
     category,
     labelId,
+    sourceType,
+    lifespanDays,
     archived: false,
     createdAt: new Date().toISOString(),
   }
@@ -32,6 +40,17 @@ export async function renameProduct(id: string, name: string, labelId: string | 
   const product = await db.get('products', id)
   if (!product) throw new Error(`Product ${id} not found`)
   await db.put('products', { ...product, name, labelId })
+}
+
+export async function updateProductSourcing(
+  id: string,
+  sourceType: SourceType,
+  lifespanDays: number | null,
+): Promise<void> {
+  const db = await getDB()
+  const product = await db.get('products', id)
+  if (!product) throw new Error(`Product ${id} not found`)
+  await db.put('products', { ...product, sourceType, lifespanDays })
 }
 
 export async function archiveProduct(id: string): Promise<void> {

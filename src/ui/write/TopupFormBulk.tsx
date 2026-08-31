@@ -55,7 +55,11 @@ export function TopupFormBulk({ product, currentTotal, onSubmit }: Props) {
           This would push the counter past 100% full — consider doing a recount in Controleer mode instead.
         </div>
       )}
-      <ProductionDateChips value={productionDate} onChange={setProductionDate} />
+      <ProductionDateChips
+        value={productionDate}
+        onChange={setProductionDate}
+        mode={product.sourceType === 'external' ? 'goodTill' : 'production'}
+      />
       <div className="actions-row">
         <BigButton variant="primary" disabled={!canSubmit} onClick={handleSubmit}>
           Log top-up
