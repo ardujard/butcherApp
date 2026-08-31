@@ -56,7 +56,7 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
       <div className="field-row">
         {mode === 'left-before' ? (
           <div className="field">
-            <label>Hoeveelheid voor aangevullen</label>
+            <label>Hoeveelheid voor aanvullen</label>
             {product.layerSize != null && (
               <span className="layer-align-spacer" aria-hidden="true">
                 &nbsp;
