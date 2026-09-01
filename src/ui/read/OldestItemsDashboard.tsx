@@ -27,7 +27,7 @@ export function OldestItemsDashboard({ onBack }: Props) {
           Oldest production date
         </button>
         <button className={sortMode === 'lifespan' ? 'active' : ''} onClick={() => setSortMode('lifespan')}>
-          Closest to lifespan limit
+          Closest to expiring
         </button>
       </div>
       {sortMode === 'oldest-date' && (

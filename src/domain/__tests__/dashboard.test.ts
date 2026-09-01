@@ -5,6 +5,7 @@ function entry(overrides: Partial<OldestItemEntry> = {}): OldestItemEntry {
   return {
     productId: 'p1',
     productName: 'Product',
+    sourceType: 'in house',
     oldestDate: null,
     lifespanDays: null,
     daysRemaining: null,
@@ -50,5 +51,14 @@ describe('sortByLifespanRemaining', () => {
       entry({ productId: 'c', daysRemaining: -1 }),
     ]
     expect(sortByLifespanRemaining(entries).map((e) => e.productId)).toEqual(['c', 'a', 'b'])
+  })
+
+  it('mixes in-house lifespan and external good-till days remaining on the same scale', () => {
+    const entries = [
+      entry({ productId: 'a', sourceType: 'in house', daysRemaining: 3 }),
+      entry({ productId: 'b', sourceType: 'external', daysRemaining: 1 }),
+      entry({ productId: 'c', sourceType: 'external', daysRemaining: -1 }),
+    ]
+    expect(sortByLifespanRemaining(entries).map((e) => e.productId)).toEqual(['c', 'b', 'a'])
   })
 })

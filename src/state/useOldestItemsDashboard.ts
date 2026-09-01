@@ -14,20 +14,35 @@ export function useOldestItemsDashboard() {
 
   const reload = useCallback(async () => {
     setLoading(true)
-    // External products have no production date to sort by — they're
-    // tracked by good-till date instead, so they're excluded from this
-    // dashboard entirely rather than shown with a misleading empty date.
-    const products = (await listProducts()).filter((p) => p.sourceType !== 'external')
+    const products = await listProducts()
     const today = toISODate(new Date())
 
     const results = await Promise.all(
       products.map(async (p) => {
         const events = await getEventsForProduct(p.id)
         const replay = replayEvents(events, p.category)
+        // For in-house products this is the oldest production date still in
+        // stock. For external products, the same underlying field holds a
+        // good-till date instead, so this becomes the soonest one still in
+        // stock — oldestActiveDate always returns the earliest date, which is
+        // the right batch to flag either way.
         const oldestDate = oldestActiveDate(replay)
         const daysRemaining =
-          p.lifespanDays != null && oldestDate != null ? p.lifespanDays - daysBetween(oldestDate, today) : null
-        return { productId: p.id, productName: p.name, oldestDate, lifespanDays: p.lifespanDays, daysRemaining }
+          oldestDate == null
+            ? null
+            : p.sourceType === 'external'
+              ? daysBetween(today, oldestDate)
+              : p.lifespanDays != null
+                ? p.lifespanDays - daysBetween(oldestDate, today)
+                : null
+        return {
+          productId: p.id,
+          productName: p.name,
+          sourceType: p.sourceType,
+          oldestDate,
+          lifespanDays: p.lifespanDays,
+          daysRemaining,
+        }
       }),
     )
     setEntries(results)
@@ -38,7 +53,13 @@ export function useOldestItemsDashboard() {
     reload()
   }, [reload])
 
-  const sorted = sortMode === 'oldest-date' ? sortOldestFirst(entries) : sortByLifespanRemaining(entries)
+  // "Oldest production date" is meaningless for external products (they have
+  // no production date), so that mode keeps excluding them; "closest to
+  // expiring" covers both in-house lifespan and external good-till dates.
+  const sorted =
+    sortMode === 'oldest-date'
+      ? sortOldestFirst(entries.filter((e) => e.sourceType !== 'external'))
+      : sortByLifespanRemaining(entries)
 
   return { entries: sorted, loading, reload, sortMode, setSortMode }
 }

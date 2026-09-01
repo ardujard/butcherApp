@@ -1,11 +1,15 @@
+import type { SourceType } from './types'
+
 export interface OldestItemEntry {
   productId: string
   productName: string
+  sourceType: SourceType
   oldestDate: string | null
   lifespanDays: number | null
-  /** lifespanDays minus days elapsed since oldestDate; null if lifespan isn't
-   * tracked for this product or it has no dated stock. Can go negative once
-   * the lifespan is exceeded. */
+  /** For in-house products: lifespanDays minus days elapsed since oldestDate,
+   * null if lifespan isn't tracked. For external products: days remaining
+   * until their good-till date. Null either way if there's no dated stock.
+   * Can go negative once the limit is passed. */
   daysRemaining: number | null
 }
 
@@ -35,8 +39,8 @@ export function sortOldestFirst(entries: OldestItemEntry[]): OldestItemEntry[] {
   })
 }
 
-/** Products closest to exceeding their lifespan first; products with no
- * lifespan tracked, or no dated stock, sort last. */
+/** Products closest to exceeding their lifespan or good-till date first;
+ * products with neither tracked, or no dated stock, sort last. */
 export function sortByLifespanRemaining(entries: OldestItemEntry[]): OldestItemEntry[] {
   return entries.slice().sort((a, b) => {
     if (a.daysRemaining == null && b.daysRemaining == null) return 0
