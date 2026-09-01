@@ -48,7 +48,32 @@ describe('backupRepo', () => {
   })
 
   it('accepts a well-formed backup payload', () => {
-    const parsed = parseBackup(JSON.stringify({ version: 1, exportedAt: 'x', labels: [], products: [], events: [] }))
+    const parsed = parseBackup(JSON.stringify({ version: 2, exportedAt: 'x', labels: [], products: [], events: [] }))
     expect(parsed.labels).toEqual([])
+  })
+
+  it('rejects a backup with no recognizable version', () => {
+    expect(() =>
+      parseBackup(JSON.stringify({ exportedAt: 'x', labels: [], products: [], events: [] })),
+    ).toThrow('does not look like a Stock Tracker backup')
+  })
+
+  it('rejects a backup made by a newer app version', () => {
+    expect(() =>
+      parseBackup(JSON.stringify({ version: 99, exportedAt: 'x', labels: [], products: [], events: [] })),
+    ).toThrow('newer version of the app')
+  })
+
+  it('backfills sourceType/lifespanDays/layerSize on products from a v1 backup', () => {
+    const parsed = parseBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: 'x',
+        labels: [],
+        products: [{ id: 'p1', name: 'Oude worst', category: 'discrete', labelId: null, archived: false, createdAt: 'x' }],
+        events: [],
+      }),
+    )
+    expect(parsed.products[0]).toMatchObject({ sourceType: 'in house', lifespanDays: null, layerSize: null })
   })
 })
