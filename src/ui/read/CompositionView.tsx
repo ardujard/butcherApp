@@ -24,7 +24,7 @@ export function CompositionView({ product, composition, oldestDate, total, unatt
       ) : (
         <>
           <p className="hint-note">
-            {isExternal ? 'Dates below are good-till dates.' : 'Dates below are production dates.'}
+            {isExternal ? 'Datums hieronder zijn houdbaar-tot-datums.' : 'Datums hieronder zijn productiedatums.'}
           </p>
           <div className="composition-list">
             {composition.map((entry) => (
