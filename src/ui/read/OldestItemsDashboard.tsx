@@ -42,10 +42,16 @@ export function OldestItemsDashboard({ onBack }: Props) {
           {dated.map((entry) => {
             const status = lifespanStatus(entry.daysRemaining)
             const rowClass = status ? STATUS_CLASS[status] : 'oldest'
+            // In "closest to expiring" mode, show the date the entry actually
+            // expires (production date + lifespan, or the good-till date) —
+            // falling back to the production date itself for a product with
+            // no lifespan tracked, since there's nothing else to show.
+            const dateShown =
+              sortMode === 'lifespan' ? (entry.expiryDate ?? entry.oldestDate!) : entry.oldestDate!
             return (
               <div key={entry.productId} className={`composition-row ${rowClass}`}>
                 <span className="date-label">{entry.productName}</span>
-                <span className="qty">{relativeDayLabel(entry.oldestDate!)}</span>
+                <span className="qty">{relativeDayLabel(dateShown)}</span>
               </div>
             )
           })}

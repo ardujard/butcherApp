@@ -11,6 +11,10 @@ export interface OldestItemEntry {
    * until their good-till date. Null either way if there's no dated stock.
    * Can go negative once the limit is passed. */
   daysRemaining: number | null
+  /** The actual calendar date this entry's daysRemaining counts down to: for
+   * in-house products, oldestDate plus lifespanDays; for external products,
+   * their good-till date itself. Null wherever daysRemaining is null. */
+  expiryDate: string | null
 }
 
 export type LifespanStatus = 'ok' | 'warning' | 'exceeded'

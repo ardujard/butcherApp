@@ -9,6 +9,7 @@ function entry(overrides: Partial<OldestItemEntry> = {}): OldestItemEntry {
     oldestDate: null,
     lifespanDays: null,
     daysRemaining: null,
+    expiryDate: null,
     ...overrides,
   }
 }
