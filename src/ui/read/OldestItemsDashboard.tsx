@@ -4,6 +4,7 @@ import { useOldestItemsDashboard } from '../../state/useOldestItemsDashboard'
 
 interface Props {
   onBack: () => void
+  onSelectProduct: (productId: string) => void
 }
 
 const STATUS_CLASS: Record<LifespanStatus, string> = {
@@ -12,7 +13,7 @@ const STATUS_CLASS: Record<LifespanStatus, string> = {
   exceeded: 'lifespan-exceeded',
 }
 
-export function OldestItemsDashboard({ onBack }: Props) {
+export function OldestItemsDashboard({ onBack, onSelectProduct }: Props) {
   const { entries, loading, sortMode, setSortMode } = useOldestItemsDashboard()
   const dated = entries.filter((e) => e.oldestDate != null)
 
@@ -49,10 +50,14 @@ export function OldestItemsDashboard({ onBack }: Props) {
             const dateShown =
               sortMode === 'lifespan' ? (entry.expiryDate ?? entry.oldestDate!) : entry.oldestDate!
             return (
-              <div key={entry.productId} className={`composition-row ${rowClass}`}>
+              <button
+                key={entry.productId}
+                className={`composition-row ${rowClass}`}
+                onClick={() => onSelectProduct(entry.productId)}
+              >
                 <span className="date-label">{entry.productName}</span>
                 <span className="qty">{relativeDayLabel(dateShown)}</span>
-              </div>
+              </button>
             )
           })}
         </div>

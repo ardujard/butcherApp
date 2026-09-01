@@ -11,6 +11,7 @@ interface Props {
 
 export function CompositionView({ product, composition, oldestDate, total, unattributed }: Props) {
   const unit = product.category === 'bulk' ? '%' : ''
+  const isExternal = product.sourceType === 'external'
 
   return (
     <div className="sheet">
@@ -21,17 +22,22 @@ export function CompositionView({ product, composition, oldestDate, total, unatt
       {composition.length === 0 ? (
         <p>No stock currently tracked.</p>
       ) : (
-        <div className="composition-list">
-          {composition.map((entry) => (
-            <div key={entry.date} className={`composition-row${entry.date === oldestDate ? ' oldest' : ''}`}>
-              <span className="date-label">{relativeDayLabel(entry.date)}</span>
-              <span className="qty">
-                {entry.qty}
-                {unit}
-              </span>
-            </div>
-          ))}
-        </div>
+        <>
+          <p className="hint-note">
+            {isExternal ? 'Dates below are good-till dates.' : 'Dates below are production dates.'}
+          </p>
+          <div className="composition-list">
+            {composition.map((entry) => (
+              <div key={entry.date} className={`composition-row${entry.date === oldestDate ? ' oldest' : ''}`}>
+                <span className="date-label">{relativeDayLabel(entry.date)}</span>
+                <span className="qty">
+                  {entry.qty}
+                  {unit}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
       {unattributed > 0 && (
         <div className="warning-banner">

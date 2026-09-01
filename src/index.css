@@ -417,6 +417,15 @@ select {
   border: 1px solid var(--border);
 }
 
+button.composition-row {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
 .composition-row .qty {
   font-size: 22px;
   font-weight: 700;

@@ -18,7 +18,17 @@ export function ReadScreen() {
   const composition = useProductComposition(selected ?? undefined)
 
   if (showOldest) {
-    return <OldestItemsDashboard onBack={() => setShowOldest(false)} />
+    return (
+      <OldestItemsDashboard
+        onBack={() => setShowOldest(false)}
+        onSelectProduct={(productId) => {
+          const product = products.find((p) => p.id === productId)
+          if (!product) return
+          setSelected(product)
+          setShowOldest(false)
+        }}
+      />
+    )
   }
 
   if (!selected) {
