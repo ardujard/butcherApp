@@ -7,13 +7,6 @@ export function isCategoryLocked(events: DomainEvent[]): boolean {
   return events.length > 0
 }
 
-/** Bulk stock is a 0-100 percentage scale with no recount field to
- * self-correct at write time, so it can silently drift past "full". Warn
- * (non-blocking) rather than reject the entry. */
-export function wouldExceedFull(currentActiveSum: number, addedPct: number): boolean {
-  return currentActiveSum + addedPct > 100
-}
-
 /** Decomposes a total into layers of a fixed size plus a loose remainder, so
  * staff can build up a count like "2 layers + 3" instead of counting stock
  * one by one. */

@@ -5,7 +5,6 @@ import {
   isCategoryLocked,
   layerBreakdown,
   totalFromLayers,
-  wouldExceedFull,
 } from '../reconcile'
 import type { DomainEvent } from '../types'
 
@@ -19,16 +18,6 @@ describe('isCategoryLocked', () => {
       { id: 1, productId: 'p1', type: 'topup', recordedAt: 't1', payload: { productionDate: 'd', addedQty: 1 } },
     ]
     expect(isCategoryLocked(events)).toBe(true)
-  })
-})
-
-describe('wouldExceedFull', () => {
-  it('flags a bulk top-up that would push the total past 100%', () => {
-    expect(wouldExceedFull(80, 30)).toBe(true)
-  })
-
-  it('allows a top-up landing exactly at 100%', () => {
-    expect(wouldExceedFull(75, 25)).toBe(false)
   })
 })
 

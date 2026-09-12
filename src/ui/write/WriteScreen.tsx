@@ -47,7 +47,7 @@ export function WriteScreen() {
       {selected.category === 'discrete' ? (
         <TopupFormDiscrete product={selected} onSubmit={handleSubmit} />
       ) : (
-        <TopupFormBulk product={selected} currentTotal={composition.total} onSubmit={handleSubmit} />
+        <TopupFormBulk product={selected} onSubmit={handleSubmit} />
       )}
       <div style={{ marginTop: 20 }}>
         <RecentEntriesList product={selected} events={recentEntries} onChanged={handleChanged} />

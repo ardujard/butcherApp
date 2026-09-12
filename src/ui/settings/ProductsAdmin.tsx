@@ -15,6 +15,7 @@ export function ProductsAdmin() {
   const [products, setProducts] = useState<Product[]>([])
   const [labels, setLabels] = useState<Label[]>([])
   const [showArchived, setShowArchived] = useState(false)
+  const [search, setSearch] = useState('')
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState<Category>('discrete')
@@ -80,7 +81,10 @@ export function ProductsAdmin() {
   }
 
   const labelName = (id: string | null) => labels.find((l) => l.id === id)?.name ?? 'No label'
-  const visible = products.filter((p) => showArchived || !p.archived)
+  const query = search.trim().toLowerCase()
+  const visible = products.filter(
+    (p) => (showArchived || !p.archived) && (query === '' || p.name.toLowerCase().includes(query)),
+  )
 
   return (
     <div>
@@ -158,7 +162,15 @@ export function ProductsAdmin() {
         </div>
       </div>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 20 }}>
+      <input
+        className="search-input"
+        style={{ marginTop: 20 }}
+        placeholder="Search products"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
         <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
         Show archived
       </label>

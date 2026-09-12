@@ -150,13 +150,27 @@ describe('replayEvents (discrete)', () => {
 })
 
 describe('replayEvents (bulk)', () => {
-  it('accumulates percentage points across top-ups with no recount field', () => {
+  it('a first-ever top-up just fills the container with the new batch', () => {
+    const result = replayEvents([bulkTopup('2026-08-20T08:00:00Z', '2026-08-20', 50)], 'bulk')
+    expect(activeComposition(result)).toEqual([{ date: '2026-08-20', qty: 50 }])
+  })
+
+  it('a later top-up dilutes existing stock down rather than adding on top, so the total is always 100', () => {
     const events = [bulkTopup('2026-08-20T08:00:00Z', '2026-08-20', 50), bulkTopup('2026-08-21T08:00:00Z', '2026-08-21', 25)]
     const result = replayEvents(events, 'bulk')
+    // the container is full (100) after any top-up: 25 is the new share,
+    // the pre-existing 50 is diluted to fill the remaining 75
     expect(activeComposition(result)).toEqual([
       { date: '2026-08-21', qty: 25 },
-      { date: '2026-08-20', qty: 50 },
+      { date: '2026-08-20', qty: 75 },
     ])
+    expect(totalActiveQty(result)).toBe(100)
+  })
+
+  it('a 100% top-up wipes out all pre-existing stock', () => {
+    const events = [bulkTopup('2026-08-20T08:00:00Z', '2026-08-20', 50), bulkTopup('2026-08-21T08:00:00Z', '2026-08-21', 100)]
+    const result = replayEvents(events, 'bulk')
+    expect(activeComposition(result)).toEqual([{ date: '2026-08-21', qty: 100 }])
   })
 
   it('a checkpoint depletes bulk percentage points FIFO just like discrete units', () => {
@@ -166,7 +180,8 @@ describe('replayEvents (bulk)', () => {
       checkpoint('2026-08-22T08:00:00Z', 40),
     ]
     const result = replayEvents(events, 'bulk')
-    // deplete 35 oldest-first: all 35 from 08-20
+    // pre-checkpoint the container is full: 75 (08-20) + 25 (08-21) = 100
+    // deplete 60 oldest-first: all 60 comes from 08-20 (75 -> 15)
     expect(activeComposition(result)).toEqual([
       { date: '2026-08-21', qty: 25 },
       { date: '2026-08-20', qty: 15 },
