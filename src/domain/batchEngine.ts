@@ -14,20 +14,24 @@ function compareDatesNewestFirst(a: string, b: string): number {
 
 /**
  * Consumes `amount` from `batches` in place, oldest production date first
- * (FIFO), skipping the unknown/unattributed bucket. A recount shortfall is
- * attributed to the stock staff are expected to sell down first, not to
- * whatever was just added. Returns whatever portion of `amount` couldn't be
- * absorbed because there wasn't enough dated stock.
+ * (FIFO). The unknown/unattributed bucket sorts as the oldest of all - it's
+ * unexplained legacy stock, not stock to protect from depletion - so it's
+ * the first thing a shortfall eats into, same as any other oldest batch. A
+ * recount shortfall is attributed to the stock staff are expected to sell
+ * down first, not to whatever was just added. A batch that's already at or
+ * below zero (e.g. from a negative correction entry) has nothing real to
+ * give, so it's skipped rather than treated as removable supply - taking
+ * from a negative bucket would reduce `remaining` by less than requested,
+ * or even grow it. Returns whatever portion of `amount` couldn't be
+ * absorbed because there wasn't enough stock to find it in.
  */
 function depleteFifo(batches: Record<string, number>, amount: number): number {
   let remaining = amount
-  const dates = Object.keys(batches)
-    .filter((d) => d !== UNKNOWN_DATE)
-    .sort((a, b) => -compareDatesNewestFirst(a, b))
+  const dates = Object.keys(batches).sort((a, b) => -compareDatesNewestFirst(a, b))
 
   for (const date of dates) {
     if (remaining <= 0) break
-    const take = Math.min(batches[date], remaining)
+    const take = Math.min(Math.max(batches[date], 0), remaining)
     batches[date] -= take
     remaining -= take
   }

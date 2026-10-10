@@ -147,6 +147,36 @@ describe('replayEvents (discrete)', () => {
     const result = replayEvents(events, 'discrete')
     expect(activeComposition(result)).toEqual([{ date: '2026-08-22', qty: 6 }])
   })
+
+  it('a later recount that matches physical reality fully absorbs a stale unknown bucket, not just dated stock', () => {
+    const events = [
+      topup('2026-09-20T08:00:00Z', '2026-09-20', 4),
+      // a forgotten +6 never got logged; the next real entry recounts the
+      // true total, routing the gap to the unknown bucket (surplus is never
+      // guessed a date)
+      topup('2026-09-28T08:00:00Z', '2026-09-28', 1, 10),
+      // days later the shelf genuinely sells out
+      checkpoint('2026-10-05T08:00:00Z', 0),
+    ]
+    const result = replayEvents(events, 'discrete')
+    expect(totalActiveQty(result)).toBe(0)
+    expect(result.batches[UNKNOWN_DATE]).toBe(0)
+    expect(result.unexplainedShortfall).toBe(0)
+  })
+
+  it('a stray negative batch (a quick "+-1" correction) is skipped during depletion, not drained as if it were removable supply', () => {
+    const events = [
+      topup('2026-09-28T08:00:00Z', '2026-09-28', 10, 10),
+      topup('2026-09-30T08:00:00Z', '2026-09-30', -1, 3), // leaves 2026-09-30 at -1
+      topup('2026-10-03T08:00:00Z', '2026-10-03', 5, 2), // recount says 2 after adding 5 -> deplete 6 from pre-existing stock
+    ]
+    const result = replayEvents(events, 'discrete')
+    // only 4 real units of old stock existed (the -1 bucket has nothing to
+    // give); the negative bucket is left alone rather than silently erased
+    expect(result.batches['2026-09-30']).toBe(-1)
+    expect(result.unexplainedShortfall).toBe(2)
+    expect(totalActiveQty(result)).toBe(4)
+  })
 })
 
 describe('replayEvents (bulk)', () => {
