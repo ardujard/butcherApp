@@ -18,9 +18,12 @@ export interface Product {
   category: Category
   labelId: string | null
   sourceType: SourceType
-  /** Days of shelf life from production date before stock is flagged as
-   * exceeded on the control page. Null means lifespan isn't tracked for this
-   * product. */
+  /** Days of shelf life before stock is flagged as exceeded on the control
+   * page. The clock starts at the production date for in-house products; for
+   * external products — which have no production date — it starts when the
+   * batch is topped up into the counter, so a professionally sealed pack
+   * keeps its distant good-till date right up until it's opened out onto the
+   * counter. Null means no limit is tracked for this product. */
   lifespanDays: number | null
   /** Standard batch size (e.g. a tray of 8 skewers) used to build up a
    * top-up total as "2 layers + 3" instead of a raw count. Null means layer
@@ -57,6 +60,15 @@ export const UNKNOWN_DATE = 'unknown'
 export interface ReplayResult {
   /** productionDate ('YYYY-MM-DD') or UNKNOWN_DATE -> remaining qty */
   batches: Record<string, number>
+  /**
+   * Batch key -> the day its earliest top-up was recorded, i.e. when it went
+   * out onto the counter. Earliest rather than latest because top-ups sharing
+   * one batch key but entered on different days merge into a single batch
+   * that FIFO can no longer tell apart, so the earliest is the only safe
+   * assumption. Only top-ups record a date here; the UNKNOWN_DATE bucket
+   * never gets one.
+   */
+  openedOn: Record<string, string>
   /**
    * Total quantity a recount claimed was consumed that the FIFO depletion
    * couldn't actually account for (i.e. the stated total implied more

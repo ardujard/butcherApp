@@ -120,9 +120,7 @@ export function ProductsAdmin() {
             <select
               value={sourceType}
               onChange={(e) => {
-                const next = e.target.value as SourceType
-                setSourceType(next)
-                if (next === 'external') setLifespanDays('')
+                setSourceType(e.target.value as SourceType)
               }}
             >
               <option value="in house">In house</option>
@@ -130,7 +128,7 @@ export function ProductsAdmin() {
             </select>
           </div>
           <div className="field">
-            <label>Lifespan (days, optional)</label>
+            <label>{sourceType === 'external' ? 'Dagen in toonbank (optioneel)' : 'Lifespan (days, optional)'}</label>
             <input
               type="number"
               inputMode="numeric"
@@ -138,8 +136,12 @@ export function ProductsAdmin() {
               value={lifespanDays}
               onChange={(e) => setLifespanDays(e.target.value)}
               placeholder="e.g. 3"
-              disabled={sourceType === 'external'}
             />
+            <p className="hint-note">
+              {sourceType === 'external'
+                ? 'Geteld vanaf het bijvullen, naast de houdbaar-tot-datum.'
+                : 'Geteld vanaf de productiedatum.'}
+            </p>
           </div>
           {category === 'discrete' && (
             <div className="field">
@@ -192,9 +194,7 @@ export function ProductsAdmin() {
                 <select
                   value={editSourceType}
                   onChange={(e) => {
-                    const next = e.target.value as SourceType
-                    setEditSourceType(next)
-                    if (next === 'external') setEditLifespanDays('')
+                    setEditSourceType(e.target.value as SourceType)
                   }}
                 >
                   <option value="in house">In house</option>
@@ -206,8 +206,7 @@ export function ProductsAdmin() {
                   min={0}
                   value={editLifespanDays}
                   onChange={(e) => setEditLifespanDays(e.target.value)}
-                  placeholder="Lifespan (days)"
-                  disabled={editSourceType === 'external'}
+                  placeholder={editSourceType === 'external' ? 'Dagen in toonbank' : 'Lifespan (days)'}
                 />
                 {p.category === 'discrete' && (
                   <input
@@ -224,7 +223,11 @@ export function ProductsAdmin() {
               <span>
                 {p.name} — {p.category === 'discrete' ? 'Telbaar' : 'Percentage'} · {labelName(p.labelId)} ·{' '}
                 {p.sourceType === 'external' ? 'External' : 'In house'}
-                {p.sourceType !== 'external' && p.lifespanDays != null ? ` · Lifespan ${p.lifespanDays}d` : ''}
+                {p.lifespanDays != null
+                  ? p.sourceType === 'external'
+                    ? ` · Toonbank ${p.lifespanDays}d`
+                    : ` · Lifespan ${p.lifespanDays}d`
+                  : ''}
                 {p.layerSize != null ? ` · Laag van ${p.layerSize}` : ''}
                 {p.archived ? ' (archived)' : ''}
               </span>
@@ -243,7 +246,7 @@ export function ProductsAdmin() {
                       setEditName(p.name)
                       setEditLabelId(p.labelId ?? '')
                       setEditSourceType(p.sourceType)
-                      setEditLifespanDays(p.sourceType !== 'external' && p.lifespanDays != null ? String(p.lifespanDays) : '')
+                      setEditLifespanDays(p.lifespanDays != null ? String(p.lifespanDays) : '')
                       setEditLayerSize(p.layerSize != null ? String(p.layerSize) : '')
                     }}
                     aria-label="Edit"

@@ -39,6 +39,13 @@ function depleteFifo(batches: Record<string, number>, amount: number): number {
   return remaining
 }
 
+/** Records when a batch first went out onto the counter, keeping the earliest
+ * day if several top-ups land on the same batch key. */
+function recordOpened(openedOn: Record<string, string>, key: string, recordedAt: string): void {
+  const day = recordedAt.slice(0, 10)
+  if (openedOn[key] == null || day < openedOn[key]) openedOn[key] = day
+}
+
 /**
  * Replays a product's full event history into its current production-date
  * composition. Batches are keyed by production date (not entry order), so a
@@ -52,6 +59,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
     .sort((a, b) => (a.recordedAt < b.recordedAt ? -1 : a.recordedAt > b.recordedAt ? 1 : a.id - b.id))
 
   const batches: Record<string, number> = {}
+  const openedOn: Record<string, string> = {}
   let unexplainedShortfall = 0
 
   for (const event of active) {
@@ -72,6 +80,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
           }
         }
         batches[payload.productionDate] = (batches[payload.productionDate] ?? 0) + addedPct
+        recordOpened(openedOn, payload.productionDate, event.recordedAt)
         continue
       }
 
@@ -92,6 +101,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
       }
 
       batches[payload.productionDate] = (batches[payload.productionDate] ?? 0) + addAmt
+      recordOpened(openedOn, payload.productionDate, event.recordedAt)
     } else {
       const payload = event.payload as CheckpointPayload
       const diff = payload.statedTotal - sum(batches)
@@ -103,7 +113,7 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
     }
   }
 
-  return { batches, unexplainedShortfall }
+  return { batches, openedOn, unexplainedShortfall }
 }
 
 /** Current composition, newest date first, zero-qty batches dropped. */

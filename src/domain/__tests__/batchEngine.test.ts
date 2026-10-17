@@ -218,3 +218,29 @@ describe('replayEvents (bulk)', () => {
     ])
   })
 })
+
+describe('replayEvents openedOn', () => {
+  it('records the day a top-up was entered, not the date on the batch', () => {
+    const result = replayEvents([topup('2026-10-14T09:00:00Z', '2026-12-02', 10)], 'discrete')
+    expect(result.openedOn).toEqual({ '2026-12-02': '2026-10-14' })
+  })
+
+  it('keeps the earliest day when several top-ups merge into one batch', () => {
+    const events = [
+      topup('2026-10-14T09:00:00Z', '2026-12-02', 10),
+      topup('2026-10-16T09:00:00Z', '2026-12-02', 5),
+    ]
+    expect(replayEvents(events, 'discrete').openedOn).toEqual({ '2026-12-02': '2026-10-14' })
+  })
+
+  it('records bulk top-ups too', () => {
+    const result = replayEvents([bulkTopup('2026-10-14T09:00:00Z', '2026-12-02', 60)], 'bulk')
+    expect(result.openedOn).toEqual({ '2026-12-02': '2026-10-14' })
+  })
+
+  it('leaves the unattributable bucket without an opened day', () => {
+    const result = replayEvents([checkpoint('2026-10-14T09:00:00Z', 12)], 'discrete')
+    expect(result.batches[UNKNOWN_DATE]).toBe(12)
+    expect(result.openedOn).toEqual({})
+  })
+})

@@ -1,4 +1,4 @@
-import { lifespanStatus, type LifespanStatus } from '../../domain/dashboard'
+import { lifespanStatus, reasonLabel, type LifespanStatus } from '../../domain/dashboard'
 import { relativeDayLabel } from '../../domain/dates'
 import { useOldestItemsDashboard } from '../../state/useOldestItemsDashboard'
 
@@ -55,7 +55,14 @@ export function OldestItemsDashboard({ onBack, onSelectProduct }: Props) {
                 className={`composition-row ${rowClass}`}
                 onClick={() => onSelectProduct(entry.productId)}
               >
-                <span className="date-label">{entry.productName}</span>
+                <span className="date-label">
+                  {entry.productName}
+                  {sortMode === 'lifespan' && entry.expiryReason && (
+                    <small className={`expiry-note expiry-${entry.expiryReason}`}>
+                      {reasonLabel(entry.expiryReason)}
+                    </small>
+                  )}
+                </span>
                 <span className="qty">{relativeDayLabel(dateShown)}</span>
               </button>
             )

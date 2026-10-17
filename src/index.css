@@ -432,8 +432,25 @@ button.composition-row {
 }
 
 .composition-row .date-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   font-size: 17px;
   color: var(--text-muted);
+}
+
+.expiry-note {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* The counter window is the limit that surprises people: the good-till date
+   printed on the pack still reads fine while this one has already run out.
+   So when it's the binding limit it outweighs the date above it. */
+.expiry-note.expiry-counter {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .composition-row.oldest {

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { oldestActiveDate, replayEvents } from '../domain/batchEngine'
-import { addDays, daysBetween, toISODate } from '../domain/dates'
-import { sortByLifespanRemaining, sortOldestFirst, type OldestItemEntry } from '../domain/dashboard'
+import { daysBetween, toISODate } from '../domain/dates'
+import {
+  soonestBatchExpiry,
+  sortByLifespanRemaining,
+  sortOldestFirst,
+  type OldestItemEntry,
+} from '../domain/dashboard'
 import { getEventsForProduct } from '../data/eventsRepo'
 import { listProducts } from '../data/productsRepo'
 
@@ -27,27 +32,19 @@ export function useOldestItemsDashboard() {
         // stock — oldestActiveDate always returns the earliest date, which is
         // the right batch to flag either way.
         const oldestDate = oldestActiveDate(replay)
-        const daysRemaining =
-          oldestDate == null
-            ? null
-            : p.sourceType === 'external'
-              ? daysBetween(today, oldestDate)
-              : p.lifespanDays != null
-                ? p.lifespanDays - daysBetween(oldestDate, today)
-                : null
-        // The date daysRemaining counts down to — reconstructed from today +
-        // daysRemaining rather than recomputed, so it can't drift out of sync
-        // with the number: for in-house that's oldestDate + lifespanDays, for
-        // external it's just their good-till date again.
-        const expiryDate = daysRemaining == null ? null : addDays(today, daysRemaining)
+        // Deliberately not derived from oldestDate: once an external product
+        // has a counter window, the batch that expires soonest need not be
+        // the one with the earliest date on it.
+        const expiry = soonestBatchExpiry(replay, p)
         return {
           productId: p.id,
           productName: p.name,
           sourceType: p.sourceType,
           oldestDate,
           lifespanDays: p.lifespanDays,
-          daysRemaining,
-          expiryDate,
+          daysRemaining: expiry == null ? null : daysBetween(today, expiry.date),
+          expiryDate: expiry?.date ?? null,
+          expiryReason: expiry?.reason ?? null,
         }
       }),
     )
