@@ -68,10 +68,13 @@ export function replayEvents(events: DomainEvent[], category: Category): ReplayR
       const payload = event.payload as TopupPayload
 
       if (category === 'bulk') {
-        // A bulk top-up isn't a delta on top of what's there - the container
-        // is always full (100%) after one. addedPct is the new batch's share
-        // of that full container, so whatever was already in it (regardless
-        // of what it summed to) gets diluted down to the remaining share.
+        // A bulk top-up into a container that still holds stock isn't a delta
+        // on top of what's there - the container is full (100%) after it.
+        // addedPct is the new batch's share of that full container, so
+        // whatever was already in it (regardless of what it summed to) gets
+        // diluted down to the remaining share. Into an empty container
+        // there's nothing to dilute, and the new batch is simply the
+        // addedPct it was entered as.
         const addedPct = payload.addedPct ?? 0
         const preSum = sum(batches)
         if (preSum > 0) {
