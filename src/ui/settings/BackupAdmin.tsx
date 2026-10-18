@@ -9,13 +9,31 @@ export function BackupAdmin() {
 
   async function handleDownload() {
     const backup = await exportBackup()
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
+    const fileName = `stock-tracker-backup-${toISODate(new Date())}.json`
+    const file = new File([JSON.stringify(backup, null, 2)], fileName, { type: 'application/json' })
+
+    // From the home screen, iOS doesn't reliably save a download link; the
+    // share sheet's "Save to Files" does. Fall back to a plain download
+    // wherever sharing files isn't supported (desktop browsers).
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] })
+        setMessage({ text: 'Backup saved.', kind: 'success' })
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        setMessage({ text: 'Could not save the backup.', kind: 'error' })
+      }
+      return
+    }
+
+    const url = URL.createObjectURL(file)
     const a = document.createElement('a')
     a.href = url
-    a.download = `stock-tracker-backup-${toISODate(new Date())}.json`
+    a.download = fileName
     a.click()
-    URL.revokeObjectURL(url)
+    // Revoking straight after click() can cancel the download in Safari
+    // before it has read the blob.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000)
     setMessage({ text: 'Backup downloaded.', kind: 'success' })
   }
 
