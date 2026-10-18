@@ -32,23 +32,26 @@ export interface ProductComposition {
  * every mount/selection change rather than cached, so a stale view can never
  * linger through the PWA being backgrounded and reopened. */
 export function useProductComposition(product: Product | undefined): ProductComposition {
-  const [events, setEvents] = useState<DomainEvent[]>([])
-  const [loading, setLoading] = useState(true)
+  // Loaded events are tagged with the product they belong to, and anything
+  // tagged with another product is ignored during render. That covers a
+  // fresh selection (still loading) and a slow load for a product that has
+  // since been deselected, without resetting state from inside the effect.
+  const [loaded, setLoaded] = useState<{ productId: string; events: DomainEvent[] } | null>(null)
+  const productId = product?.id
 
-  const reload = useCallback(async () => {
-    if (!product) {
-      setEvents([])
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setEvents(await getEventsForProduct(product.id))
-    setLoading(false)
-  }, [product])
+  const reload = useCallback(
+    async (): Promise<void> =>
+      productId == null ? undefined : getEventsForProduct(productId).then((events) => setLoaded({ productId, events })),
+    [productId],
+  )
 
   useEffect(() => {
     reload()
   }, [reload])
+
+  const current = product != null && loaded?.productId === product.id
+  const events = current ? loaded.events : []
+  const loading = product != null && !current
 
   const result = product
     ? replayEvents(events, product.category)

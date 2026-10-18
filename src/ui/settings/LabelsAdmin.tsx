@@ -11,7 +11,7 @@ export function LabelsAdmin() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
 
-  const reload = useCallback(async () => setLabels(await listLabels(true)), [])
+  const reload = useCallback(() => listLabels(true).then(setLabels), [])
   useEffect(() => {
     reload()
   }, [reload])

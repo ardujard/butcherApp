@@ -14,6 +14,12 @@ import { isProductTypeLocked } from '../../domain/reconcile'
 import { parseOptionalWholeNumber } from '../../domain/validation'
 import { BigButton } from '../shared/BigButton'
 
+async function loadAdminData(): Promise<{ products: Product[]; labels: Label[]; lockedIds: Set<string> }> {
+  const [products, labels] = await Promise.all([listProducts(true), listLabels()])
+  const locked = await Promise.all(products.map(async (p) => isProductTypeLocked(await getEventsForProduct(p.id))))
+  return { products, labels, lockedIds: new Set(products.filter((_, i) => locked[i]).map((p) => p.id)) }
+}
+
 export function ProductsAdmin() {
   const [products, setProducts] = useState<Product[]>([])
   const [labels, setLabels] = useState<Label[]>([])
@@ -35,13 +41,15 @@ export function ProductsAdmin() {
   const [editLifespanDays, setEditLifespanDays] = useState('')
   const [editLayerSize, setEditLayerSize] = useState('')
 
-  const reload = useCallback(async () => {
-    const [prods, labs] = await Promise.all([listProducts(true), listLabels()])
-    const locked = await Promise.all(prods.map(async (p) => isProductTypeLocked(await getEventsForProduct(p.id))))
-    setLockedIds(new Set(prods.filter((_, i) => locked[i]).map((p) => p.id)))
-    setProducts(prods)
-    setLabels(labs)
-  }, [])
+  const reload = useCallback(
+    () =>
+      loadAdminData().then((data) => {
+        setProducts(data.products)
+        setLabels(data.labels)
+        setLockedIds(data.lockedIds)
+      }),
+    [],
+  )
   useEffect(() => {
     reload()
   }, [reload])

@@ -12,44 +12,52 @@ import { listProducts } from '../data/productsRepo'
 
 export type DashboardSortMode = 'oldest-date' | 'lifespan'
 
+async function loadEntries(): Promise<OldestItemEntry[]> {
+  const products = await listProducts()
+  const today = toISODate(new Date())
+
+  return Promise.all(
+    products.map(async (p) => {
+      const events = await getEventsForProduct(p.id)
+      const replay = replayEvents(events, p.category)
+      // For in-house products this is the oldest production date still in
+      // stock. For external products, the same underlying field holds a
+      // good-till date instead, so this becomes the soonest one still in
+      // stock — oldestActiveDate always returns the earliest date, which is
+      // the right batch to flag either way.
+      const oldestDate = oldestActiveDate(replay)
+      // Deliberately not derived from oldestDate: once an external product
+      // has a counter window, the batch that expires soonest need not be
+      // the one with the earliest date on it.
+      const expiry = soonestBatchExpiry(replay, p)
+      return {
+        productId: p.id,
+        productName: p.name,
+        sourceType: p.sourceType,
+        oldestDate,
+        lifespanDays: p.lifespanDays,
+        daysRemaining: expiry == null ? null : daysBetween(today, expiry.date),
+        expiry,
+      }
+    }),
+  )
+}
+
 export function useOldestItemsDashboard() {
   const [entries, setEntries] = useState<OldestItemEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [sortMode, setSortMode] = useState<DashboardSortMode>('oldest-date')
 
-  const reload = useCallback(async () => {
-    setLoading(true)
-    const products = await listProducts()
-    const today = toISODate(new Date())
-
-    const results = await Promise.all(
-      products.map(async (p) => {
-        const events = await getEventsForProduct(p.id)
-        const replay = replayEvents(events, p.category)
-        // For in-house products this is the oldest production date still in
-        // stock. For external products, the same underlying field holds a
-        // good-till date instead, so this becomes the soonest one still in
-        // stock — oldestActiveDate always returns the earliest date, which is
-        // the right batch to flag either way.
-        const oldestDate = oldestActiveDate(replay)
-        // Deliberately not derived from oldestDate: once an external product
-        // has a counter window, the batch that expires soonest need not be
-        // the one with the earliest date on it.
-        const expiry = soonestBatchExpiry(replay, p)
-        return {
-          productId: p.id,
-          productName: p.name,
-          sourceType: p.sourceType,
-          oldestDate,
-          lifespanDays: p.lifespanDays,
-          daysRemaining: expiry == null ? null : daysBetween(today, expiry.date),
-          expiry,
-        }
+  // State is only set once the data has arrived; a reload keeps showing the
+  // current list rather than flashing back to "Loading…".
+  const reload = useCallback(
+    () =>
+      loadEntries().then((results) => {
+        setEntries(results)
+        setLoading(false)
       }),
-    )
-    setEntries(results)
-    setLoading(false)
-  }, [])
+    [],
+  )
 
   useEffect(() => {
     reload()

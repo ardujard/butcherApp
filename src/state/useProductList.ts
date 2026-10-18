@@ -11,29 +11,37 @@ export interface ProductWithMeta extends Product {
   popularity: number
 }
 
+async function loadProductList(): Promise<{ products: ProductWithMeta[]; labels: Label[] }> {
+  const [prods, labels] = await Promise.all([listProducts(), listLabels()])
+  const labelNameById = new Map(labels.map((l) => [l.id, l.name]))
+  const sinceISO = new Date(Date.now() - POPULARITY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+
+  const products = await Promise.all(
+    prods.map(async (p) => ({
+      ...p,
+      labelName: p.labelId ? (labelNameById.get(p.labelId) ?? null) : null,
+      popularity: await countEventsSince(p.id, sinceISO),
+    })),
+  )
+  return { products, labels }
+}
+
 export function useProductList() {
   const [products, setProducts] = useState<ProductWithMeta[]>([])
   const [labels, setLabels] = useState<Label[]>([])
   const [loading, setLoading] = useState(true)
 
-  const reload = useCallback(async () => {
-    setLoading(true)
-    const [prods, labs] = await Promise.all([listProducts(), listLabels()])
-    const labelNameById = new Map(labs.map((l) => [l.id, l.name]))
-    const sinceISO = new Date(Date.now() - POPULARITY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
-
-    const withMeta = await Promise.all(
-      prods.map(async (p) => ({
-        ...p,
-        labelName: p.labelId ? (labelNameById.get(p.labelId) ?? null) : null,
-        popularity: await countEventsSince(p.id, sinceISO),
-      })),
-    )
-
-    setProducts(withMeta)
-    setLabels(labs)
-    setLoading(false)
-  }, [])
+  // State is only set once the data has arrived; a reload keeps showing the
+  // current list rather than flashing back to a loading state.
+  const reload = useCallback(
+    () =>
+      loadProductList().then(({ products, labels }) => {
+        setProducts(products)
+        setLabels(labels)
+        setLoading(false)
+      }),
+    [],
+  )
 
   useEffect(() => {
     reload()
