@@ -66,32 +66,32 @@ describe('eventsRepo', () => {
     expect(await countEventsSince(product.id, '2999-01-01T00:00:00.000Z')).toBe(0)
   })
 
-  it('deletes a product\'s events older than 30 days when a new entry is logged', async () => {
-    const product = await createProduct('Kaasburger', 'discrete', null)
+  async function addOldEntry(productId: string, daysAgo: number, event: Pick<DomainEvent, 'type' | 'payload'>) {
     const db = await getDB()
+    const recordedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString()
+    await db.add('events', { productId, recordedAt, ...event } as Omit<DomainEvent, 'id'> as DomainEvent)
+  }
 
-    const overThirtyDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
-    const underThirtyDaysAgo = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString()
-    await db.add('events', {
-      productId: product.id,
-      type: 'topup',
-      recordedAt: overThirtyDaysAgo,
-      payload: { productionDate: overThirtyDaysAgo.slice(0, 10), addedQty: 4 },
-    } as Omit<DomainEvent, 'id'> as DomainEvent)
-    await db.add('events', {
-      productId: product.id,
-      type: 'topup',
-      recordedAt: underThirtyDaysAgo,
-      payload: { productionDate: underThirtyDaysAgo.slice(0, 10), addedQty: 3 },
-    } as Omit<DomainEvent, 'id'> as DomainEvent)
+  it('deletes entries older than 30 days once their stock is gone, when a new entry is logged', async () => {
+    const product = await createProduct('Kaasburger', 'discrete', null)
+    await addOldEntry(product.id, 40, { type: 'topup', payload: { productionDate: '2026-08-01', addedQty: 4, statedTotal: 4 } })
+    await addOldEntry(product.id, 35, { type: 'checkpoint', payload: { statedTotal: 0 } })
+    await addOldEntry(product.id, 29, { type: 'topup', payload: { productionDate: '2026-08-20', addedQty: 3, statedTotal: 3 } })
 
-    await addTopup(product.id, { productionDate: '2026-08-30', addedQty: 2 })
+    await addTopup(product.id, { productionDate: '2026-08-30', addedQty: 2, statedTotal: 5 })
 
     const remaining = await getEventsForProduct(product.id)
-    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual([
-      underThirtyDaysAgo.slice(0, 10),
-      '2026-08-30',
-    ])
+    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual(['2026-08-20', '2026-08-30'])
+  })
+
+  it('keeps an entry older than 30 days while its stock is still in the counter', async () => {
+    const product = await createProduct('Rookworst', 'discrete', null, 'external')
+    await addOldEntry(product.id, 40, { type: 'topup', payload: { productionDate: '2026-11-20', addedQty: 10, statedTotal: 10 } })
+
+    await addTopup(product.id, { productionDate: '2026-11-30', addedQty: 10, statedTotal: 16 })
+
+    const remaining = await getEventsForProduct(product.id)
+    expect(remaining.map((e) => (e.payload as TopupPayload).productionDate)).toEqual(['2026-11-20', '2026-11-30'])
   })
 
   it('surfaces the most recently used distinct production dates globally', async () => {

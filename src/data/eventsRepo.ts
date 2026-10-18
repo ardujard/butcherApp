@@ -1,4 +1,5 @@
 import type { CheckpointPayload, DomainEvent, TopupPayload } from '../domain/types'
+import { prunableEvents } from '../domain/prune'
 import { getDB } from './db'
 
 const RETENTION_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
@@ -51,21 +52,23 @@ export async function addCheckpoint(productId: string, payload: CheckpointPayloa
   return result
 }
 
-/** Triggered after every new entry: hard-deletes this product's events
- * older than 30 days. The log is the live source of current stock, not
- * just an audit trail — a product that goes untouched for 30+ days will
- * have its entire history, and therefore its tracked stock, cleared with
- * it (a deliberate tradeoff for simplicity over the alternative of only
- * pruning events a full replay can prove are safe to discard). */
+/** Triggered after every new entry: deletes this product's entries older
+ * than 30 days, but only those a replay proves no longer affect its current
+ * stock (see prunableEvents). An old top-up whose stock is still in the
+ * counter is kept, however old, so that stock keeps its date and its
+ * warnings. Read and delete share one transaction, so an entry logged
+ * meanwhile can't slip between the check and the delete. */
 async function pruneOldEvents(productId: string): Promise<void> {
   const cutoff = new Date(Date.now() - RETENTION_WINDOW_MS).toISOString()
   const db = await getDB()
-  const range = IDBKeyRange.bound([productId, ''], [productId, cutoff], false, true)
-  const tx = db.transaction('events', 'readwrite')
-  let cursor = await tx.store.index('by-productId-recordedAt').openCursor(range)
-  while (cursor) {
-    await cursor.delete()
-    cursor = await cursor.continue()
+  const tx = db.transaction(['products', 'events'], 'readwrite')
+  const product = await tx.objectStore('products').get(productId)
+  if (product) {
+    const events = tx.objectStore('events')
+    const history = await events.index('by-productId').getAll(productId)
+    for (const event of prunableEvents(history, product.category, cutoff)) {
+      await events.delete(event.id)
+    }
   }
   await tx.done
 }
