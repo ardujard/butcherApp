@@ -14,16 +14,16 @@ export function BackupAdmin() {
 
     // From the home screen, iOS doesn't reliably save a download link; the
     // share sheet's "Save to Files" does. Fall back to a plain download
-    // wherever sharing files isn't supported (desktop browsers).
+    // wherever sharing files isn't supported, or the share is refused (Safari
+    // can reject it as no longer user-initiated after the await above).
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file] })
         setMessage({ text: 'Backup saved.', kind: 'success' })
+        return
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return
-        setMessage({ text: 'Could not save the backup.', kind: 'error' })
       }
-      return
     }
 
     const url = URL.createObjectURL(file)
@@ -48,10 +48,12 @@ export function BackupAdmin() {
 
     try {
       const backup = parseBackup(await file.text())
+      const exported = new Date(backup.exportedAt)
+      const exportedOn = Number.isNaN(exported.getTime()) ? 'an unknown date' : toISODate(exported)
       const confirmed = window.confirm(
         `This replaces all current products, labels, and history with the ${backup.labels.length} label(s), ` +
           `${backup.products.length} product(s), and ${backup.events.length} entr${backup.events.length === 1 ? 'y' : 'ies'} ` +
-          `in this backup (from ${toISODate(new Date(backup.exportedAt))}). This cannot be undone. Continue?`,
+          `in this backup (from ${exportedOn}). This cannot be undone. Continue?`,
       )
       if (!confirmed) return
 
