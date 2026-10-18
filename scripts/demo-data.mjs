@@ -6,8 +6,6 @@
 // watching deadlines fall on either side of today — a fixed fixture goes
 // stale in a week and starts showing everything in red.
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** @typedef {{ id: string, name: string, category: 'discrete' | 'bulk',
  *   sourceType: 'in house' | 'external', lifespanDays: number | null,
  *   batches: [dateOffset: number, openedOffset: number, amount: number][] }} DemoSpec */
@@ -91,9 +89,14 @@ export const DEMO_SPECS = [
 
 /** Builds a backup-shaped payload, with every date offset from `from`. */
 export function buildDemoData(from = new Date()) {
-  const today = from.toISOString().slice(0, 10)
-  const day = (offset) => new Date(Date.parse(`${today}T00:00:00Z`) + offset * DAY_MS).toISOString().slice(0, 10)
-  const at = (offset) => `${day(offset)}T08:00:00.000Z`
+  // Offsets count local calendar days, as the app does: 08:00 on the device's
+  // own clock, so no timezone shifts a top-up onto the neighbouring day.
+  const localAt = (offset) => new Date(from.getFullYear(), from.getMonth(), from.getDate() + offset, 8)
+  const day = (offset) => {
+    const d = localAt(offset)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  const at = (offset) => localAt(offset).toISOString()
 
   const events = []
   let nextId = 1

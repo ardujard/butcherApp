@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, daysBetween, lastNDays, nextNDays, relativeDayLabel } from '../dates'
+import { addDays, daysBetween, lastNDays, nextNDays, relativeDayLabel, toISODate } from '../dates'
 
 describe('addDays', () => {
   it('adds and subtracts days across month boundaries', () => {
@@ -50,5 +50,12 @@ describe('relativeDayLabel', () => {
 
   it('zero-pads single-digit day and month', () => {
     expect(relativeDayLabel('2026-08-05', from)).toBe('05/08')
+  })
+})
+
+describe('toISODate', () => {
+  it('gives the local calendar day, not the UTC one, just after midnight', () => {
+    // 00:30 in Brussels (CEST, UTC+2) is still 22:30 the previous day in UTC.
+    expect(toISODate(new Date('2026-08-22T22:30:00Z'))).toBe('2026-08-23')
   })
 })

@@ -2,8 +2,6 @@ import type { Page } from '@playwright/test'
 // @ts-expect-error - plain JS module, also used as a CLI to emit a backup file
 import { buildDemoData } from '../scripts/demo-data.mjs'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** Replaces everything in the app's IndexedDB with the demo stock, then
  * reloads so React reads the new data. */
 export async function seedDemoData(page: Page): Promise<void> {
@@ -46,8 +44,9 @@ export async function seedDemoData(page: Page): Promise<void> {
  * Computed here independently of the app's own date helpers, so a bug in
  * those can't quietly agree with itself. */
 export function dayLabel(offset: number): string {
-  const d = new Date(Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`) + offset * DAY_MS)
-  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+  const now = new Date()
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset)
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 export async function openControlPage(page: Page, productName: string): Promise<void> {

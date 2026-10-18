@@ -1,5 +1,6 @@
 import type { Category, CheckpointPayload, CompositionEntry, DomainEvent, ReplayResult, TopupPayload } from './types'
 import { UNKNOWN_DATE } from './types'
+import { toISODate } from './dates'
 
 function sum(batches: Record<string, number>): number {
   return Object.values(batches).reduce((a, b) => a + b, 0)
@@ -42,7 +43,7 @@ function depleteFifo(batches: Record<string, number>, amount: number): number {
 /** Records when a batch first went out onto the counter, keeping the earliest
  * day if several top-ups land on the same batch key. */
 function recordOpened(openedOn: Record<string, string>, key: string, recordedAt: string): void {
-  const day = recordedAt.slice(0, 10)
+  const day = toISODate(new Date(recordedAt))
   if (openedOn[key] == null || day < openedOn[key]) openedOn[key] = day
 }
 

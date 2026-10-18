@@ -33,7 +33,7 @@ export function BackupAdmin() {
       const confirmed = window.confirm(
         `This replaces all current products, labels, and history with the ${backup.labels.length} label(s), ` +
           `${backup.products.length} product(s), and ${backup.events.length} entr${backup.events.length === 1 ? 'y' : 'ies'} ` +
-          `in this backup (from ${backup.exportedAt.slice(0, 10)}). This cannot be undone. Continue?`,
+          `in this backup (from ${toISODate(new Date(backup.exportedAt))}). This cannot be undone. Continue?`,
       )
       if (!confirmed) return
 

@@ -8,14 +8,25 @@ function atUTCMidnight(dateISO: string): Date {
   return new Date(`${dateISO}T00:00:00Z`)
 }
 
-export function toISODate(d: Date): string {
+function utcISODate(d: Date): string {
   return d.toISOString().slice(0, 10)
+}
+
+/** The calendar day a moment falls on where the device is, as 'YYYY-MM-DD'.
+ * The one place a real clock reading becomes a date: not via toISOString(),
+ * which gives the UTC day — still yesterday in Belgium until 01:00 (02:00
+ * in summer). */
+export function toISODate(d: Date): string {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
 export function addDays(dateISO: string, delta: number): string {
   const d = atUTCMidnight(dateISO)
   d.setUTCDate(d.getUTCDate() + delta)
-  return toISODate(d)
+  return utcISODate(d)
 }
 
 /** Last `n` calendar days including today, newest first. */

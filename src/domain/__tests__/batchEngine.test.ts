@@ -252,3 +252,11 @@ describe('displayQty', () => {
     expect(displayQty(6)).toBe(6)
   })
 })
+
+describe('replayEvents openedOn across midnight', () => {
+  it('dates a top-up by the local day it was entered', () => {
+    // 00:30 Brussels time on 14/10, which is still 13/10 in UTC.
+    const events = [topup('2026-10-13T22:30:00.000Z', '2026-12-02', 5)]
+    expect(replayEvents(events, 'discrete').openedOn).toEqual({ '2026-12-02': '2026-10-14' })
+  })
+})

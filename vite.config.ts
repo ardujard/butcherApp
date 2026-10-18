@@ -31,6 +31,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: ['./src/test/setup.ts'],
+    // Calendar days come from the device clock, so pin the zone the iPad
+    // runs in; otherwise date tests pass or fail depending on the machine.
+    env: { TZ: 'Europe/Brussels' },
     // e2e/ holds Playwright specs, which vitest would otherwise collect by
     // name and fail to run.
     exclude: ['node_modules/**', 'dist/**', 'e2e/**'],

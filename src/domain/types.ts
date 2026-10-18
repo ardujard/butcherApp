@@ -61,8 +61,8 @@ export interface ReplayResult {
   /** productionDate ('YYYY-MM-DD') or UNKNOWN_DATE -> remaining qty */
   batches: Record<string, number>
   /**
-   * Batch key -> the day its earliest top-up was recorded, i.e. when it went
-   * out onto the counter. Earliest rather than latest because top-ups sharing
+   * Batch key -> the local day its earliest top-up was recorded, i.e. when it
+   * went out onto the counter. Earliest rather than latest because top-ups sharing
    * one batch key but entered on different days merge into a single batch
    * that FIFO can no longer tell apart, so the earliest is the only safe
    * assumption. Only top-ups record a date here; the UNKNOWN_DATE bucket
