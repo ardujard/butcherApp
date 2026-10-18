@@ -15,10 +15,12 @@ function sameQty(a: number, b: number): boolean {
  * (a batch missing from one side counts as 0, which replays identically), and
  * the top-up day of every batch still in stock.
  *
- * Not compared: the top-up day of a batch that has run out, which only ever
- * mattered for showing that batch; and unexplainedShortfall, a running tally
- * of past data-quality problems that no screen shows — comparing it would pin
- * every entry that ever produced a shortfall in place forever.
+ * Not compared: the top-up day of a batch that has run out. It only matters
+ * again if a later top-up reuses the same batch date, which then counts from
+ * its own day instead of the long-gone batch's — the more accurate answer.
+ * Nor unexplainedShortfall, a running tally of past data-quality problems that
+ * no screen shows; comparing it would pin every entry that ever produced a
+ * shortfall in place forever.
  */
 export function sameCounterState(a: ReplayResult, b: ReplayResult): boolean {
   const keys = new Set([...Object.keys(a.batches), ...Object.keys(b.batches)])

@@ -28,9 +28,10 @@ export interface ProductComposition {
   reload: () => Promise<void>
 }
 
-/** Loads a product's full event history and replays it fresh. Recomputed on
- * every mount/selection change rather than cached, so a stale view can never
- * linger through the PWA being backgrounded and reopened. */
+/** Loads a product's full event history and replays it fresh. Reloaded on
+ * every mount/selection change, so a stale view can never linger through the
+ * PWA being backgrounded and reopened; reselecting a product shows its last
+ * loaded history only until the reload lands. */
 export function useProductComposition(product: Product | undefined): ProductComposition {
   // Loaded events are tagged with the product they belong to, and anything
   // tagged with another product is ignored during render. That covers a
