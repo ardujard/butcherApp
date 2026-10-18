@@ -2,22 +2,22 @@ import { describe, expect, it } from 'vitest'
 import {
   addedFromLeftBefore,
   daysSinceLastCheckpoint,
-  isCategoryLocked,
+  isProductTypeLocked,
   layerBreakdown,
   totalFromLayers,
 } from '../reconcile'
 import type { DomainEvent } from '../types'
 
-describe('isCategoryLocked', () => {
+describe('isProductTypeLocked', () => {
   it('is unlocked with no history', () => {
-    expect(isCategoryLocked([])).toBe(false)
+    expect(isProductTypeLocked([])).toBe(false)
   })
 
   it('locks once any event exists', () => {
     const events: DomainEvent[] = [
       { id: 1, productId: 'p1', type: 'topup', recordedAt: 't1', payload: { productionDate: 'd', addedQty: 1 } },
     ]
-    expect(isCategoryLocked(events)).toBe(true)
+    expect(isProductTypeLocked(events)).toBe(true)
   })
 })
 

@@ -1,9 +1,13 @@
 import type { DomainEvent } from './types'
 
-/** Once a product has any history, its category can't change: discrete
- * counts and bulk percentage-points aren't compatible units to replay
- * together. Repurpose by archiving and creating a new product instead. */
-export function isCategoryLocked(events: DomainEvent[]): boolean {
+/** Once a product has any history, its category and source type can't
+ * change. Discrete counts and bulk percentage-points aren't compatible units
+ * to replay together, and a stored batch date means a production date for
+ * in-house stock but a good-till date for external stock — switching would
+ * silently reinterpret every recorded batch, flagging fresh stock as expired
+ * or hiding stock that is. Repurpose by archiving and creating a new product
+ * instead. */
+export function isProductTypeLocked(events: DomainEvent[]): boolean {
   return events.length > 0
 }
 

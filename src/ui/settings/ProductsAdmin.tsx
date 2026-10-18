@@ -9,11 +9,14 @@ import {
   updateProductSettings,
 } from '../../data/productsRepo'
 import { listLabels } from '../../data/labelsRepo'
+import { getEventsForProduct } from '../../data/eventsRepo'
+import { isProductTypeLocked } from '../../domain/reconcile'
 import { BigButton } from '../shared/BigButton'
 
 export function ProductsAdmin() {
   const [products, setProducts] = useState<Product[]>([])
   const [labels, setLabels] = useState<Label[]>([])
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set())
   const [showArchived, setShowArchived] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -33,6 +36,8 @@ export function ProductsAdmin() {
 
   const reload = useCallback(async () => {
     const [prods, labs] = await Promise.all([listProducts(true), listLabels()])
+    const locked = await Promise.all(prods.map(async (p) => isProductTypeLocked(await getEventsForProduct(p.id))))
+    setLockedIds(new Set(prods.filter((_, i) => locked[i]).map((p) => p.id)))
     setProducts(prods)
     setLabels(labs)
   }, [])
@@ -193,6 +198,7 @@ export function ProductsAdmin() {
                 </select>
                 <select
                   value={editSourceType}
+                  disabled={lockedIds.has(p.id)}
                   onChange={(e) => {
                     setEditSourceType(e.target.value as SourceType)
                   }}
@@ -200,6 +206,9 @@ export function ProductsAdmin() {
                   <option value="in house">In house</option>
                   <option value="external">External</option>
                 </select>
+                {lockedIds.has(p.id) && (
+                  <p className="hint-note">Bron vast: dit product heeft al geschiedenis.</p>
+                )}
                 <input
                   type="number"
                   inputMode="numeric"
