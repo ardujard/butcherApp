@@ -29,16 +29,3 @@ export function totalFromLayers(layers: number, extra: number, layerSize: number
 export function addedFromLeftBefore(total: number, leftBefore: number): number {
   return total - leftBefore
 }
-
-/** Days since a product's last checkpoint recount, or null if it has never
- * had one. Bulk products drift faster than discrete ones (no self-correcting
- * total field on write), so the UI uses this to nudge staff toward a
- * periodic recount. */
-export function daysSinceLastCheckpoint(events: DomainEvent[], from: Date = new Date()): number | null {
-  const checkpoints = events.filter((e) => e.type === 'checkpoint')
-  if (checkpoints.length === 0) return null
-
-  const last = checkpoints.reduce((latest, e) => (e.recordedAt > latest.recordedAt ? e : latest))
-  const diffMs = from.getTime() - new Date(last.recordedAt).getTime()
-  return Math.floor(diffMs / (24 * 60 * 60 * 1000))
-}
