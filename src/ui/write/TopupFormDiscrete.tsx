@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Product, TopupPayload } from '../../domain/types'
 import { toISODate } from '../../domain/dates'
 import { addedFromLeftBefore } from '../../domain/reconcile'
+import { isValidTotal } from '../../domain/validation'
 import { BigButton } from '../shared/BigButton'
 import { LayerTotalInput } from '../shared/LayerTotalInput'
 import { ProductionDateChips } from './ProductionDateChips'
@@ -30,8 +31,15 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
         ? Number(addedQty)
         : null
 
+  // Amount added may go negative (flagged below) to correct a miscount, but
+  // neither count staff actually take can.
+  const countsValid =
+    (totalAmount == null || isValidTotal(totalAmount, 'discrete')) &&
+    (mode !== 'left-before' || leftBefore === '' || isValidTotal(Number(leftBefore), 'discrete'))
+
   const canSubmit =
     productionDate !== '' &&
+    countsValid &&
     totalAmount != null &&
     computedAdded != null &&
     (mode === 'left-before' ? leftBefore !== '' : addedQty !== '') &&
@@ -108,7 +116,8 @@ export function TopupFormDiscrete({ product, onSubmit }: Props) {
           </div>
         )}
       </div>
-      {computedAdded != null && computedAdded < 0 && (
+      {!countsValid && <div className="warning-banner">Counts cannot be negative.</div>}
+      {countsValid && computedAdded != null && computedAdded < 0 && (
         <div className="warning-banner">This means fewer items than were left before — check the numbers.</div>
       )}
       <ProductionDateChips

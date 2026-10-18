@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Product } from '../../domain/types'
+import { isValidTotal } from '../../domain/validation'
 import { BigButton } from '../shared/BigButton'
 
 interface Props {
@@ -20,8 +21,10 @@ export function CheckpointForm({ product, onSubmit }: Props) {
     )
   }
 
+  const valid = value !== '' && isValidTotal(Number(value), product.category)
+
   async function handleSubmit() {
-    if (value === '') return
+    if (!valid) return
     setSubmitting(true)
     try {
       await onSubmit(Number(value))
@@ -45,9 +48,14 @@ export function CheckpointForm({ product, onSubmit }: Props) {
           autoFocus
         />
       </div>
+      {value !== '' && !valid && (
+        <div className="warning-banner">
+          {product.category === 'bulk' ? 'Enter a percentage from 0 to 100.' : 'The count cannot be negative.'}
+        </div>
+      )}
       <div className="actions-row">
         <BigButton onClick={() => setOpen(false)}>Cancel</BigButton>
-        <BigButton variant="primary" disabled={submitting || value === ''} onClick={handleSubmit}>
+        <BigButton variant="primary" disabled={submitting || !valid} onClick={handleSubmit}>
           Save recount
         </BigButton>
       </div>

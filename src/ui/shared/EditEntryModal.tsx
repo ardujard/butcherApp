@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CheckpointPayload, DomainEvent, Product, TopupPayload } from '../../domain/types'
 import { editEvent } from '../../data/eventsRepo'
+import { isValidTotal } from '../../domain/validation'
 import { ProductionDateChips } from '../write/ProductionDateChips'
 import { BigButton } from './BigButton'
 import { LayerTotalInput } from './LayerTotalInput'
@@ -31,7 +32,16 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
   )
   const [saving, setSaving] = useState(false)
 
+  // A top-up's stated total is optional; a recount's is the whole entry.
+  const totalValid =
+    isTopup && statedTotal === '' ? true : statedTotal !== '' && isValidTotal(Number(statedTotal), product.category)
+  const addedValid =
+    !isTopup ||
+    (product.category === 'discrete' ? addedQty !== '' && Number.isFinite(Number(addedQty)) : addedPct != null)
+  const valid = (!isTopup || productionDate !== '') && totalValid && addedValid
+
   async function handleSave() {
+    if (!valid) return
     setSaving(true)
     try {
       if (isTopup) {
@@ -109,9 +119,14 @@ export function EditEntryModal({ product, event, onClose, onSaved }: Props) {
             <input type="number" value={statedTotal} onChange={(e) => setStatedTotal(e.target.value)} />
           </div>
         )}
+        {statedTotal !== '' && !totalValid && (
+          <div className="warning-banner">
+            {product.category === 'bulk' ? 'Enter a percentage from 0 to 100.' : 'The total cannot be negative.'}
+          </div>
+        )}
         <div className="actions-row">
           <BigButton onClick={onClose}>Cancel</BigButton>
-          <BigButton variant="primary" disabled={saving} onClick={handleSave}>
+          <BigButton variant="primary" disabled={saving || !valid} onClick={handleSave}>
             Save
           </BigButton>
         </div>

@@ -11,6 +11,7 @@ import {
 import { listLabels } from '../../data/labelsRepo'
 import { getEventsForProduct } from '../../data/eventsRepo'
 import { isProductTypeLocked } from '../../domain/reconcile'
+import { parseOptionalWholeNumber } from '../../domain/validation'
 import { BigButton } from '../shared/BigButton'
 
 export function ProductsAdmin() {
@@ -45,16 +46,18 @@ export function ProductsAdmin() {
     reload()
   }, [reload])
 
+  // Lifespan may be 0 (out of the counter the same day); a layer of 0 would
+  // divide by zero when splitting a total into layers.
+  const newLifespan = parseOptionalWholeNumber(lifespanDays, 0)
+  const newLayerSize = category === 'discrete' ? parseOptionalWholeNumber(layerSize, 1) : null
+  const newValid = name.trim() !== '' && newLifespan !== undefined && newLayerSize !== undefined
+  const editLifespan = parseOptionalWholeNumber(editLifespanDays, 0)
+  const editLayer = parseOptionalWholeNumber(editLayerSize, 1)
+  const editValid = editName.trim() !== '' && editLifespan !== undefined && editLayer !== undefined
+
   async function handleAdd() {
-    if (!name.trim()) return
-    await createProduct(
-      name.trim(),
-      category,
-      labelId || null,
-      sourceType,
-      lifespanDays === '' ? null : Number(lifespanDays),
-      layerSize === '' ? null : Number(layerSize),
-    )
+    if (!newValid) return
+    await createProduct(name.trim(), category, labelId || null, sourceType, newLifespan, newLayerSize)
     setName('')
     setSourceType('in house')
     setLifespanDays('')
@@ -63,14 +66,9 @@ export function ProductsAdmin() {
   }
 
   async function handleSaveEdit(id: string) {
-    if (!editName.trim()) return
+    if (!editValid) return
     await renameProduct(id, editName.trim(), editLabelId || null)
-    await updateProductSettings(
-      id,
-      editSourceType,
-      editLifespanDays === '' ? null : Number(editLifespanDays),
-      editLayerSize === '' ? null : Number(editLayerSize),
-    )
+    await updateProductSettings(id, editSourceType, editLifespan, editLayer)
     setEditingId(null)
     reload()
   }
@@ -162,8 +160,13 @@ export function ProductsAdmin() {
             </div>
           )}
         </div>
+        {(newLifespan === undefined || newLayerSize === undefined) && (
+          <div className="warning-banner">
+            Gebruik hele getallen: dagen vanaf 0, laaggrootte vanaf 1.
+          </div>
+        )}
         <div className="actions-row">
-          <BigButton variant="primary" onClick={handleAdd} disabled={!name.trim()}>
+          <BigButton variant="primary" onClick={handleAdd} disabled={!newValid}>
             Add product
           </BigButton>
         </div>
@@ -245,7 +248,9 @@ export function ProductsAdmin() {
               {p.archived ? (
                 <BigButton onClick={() => handleRestore(p.id)}>Restore</BigButton>
               ) : editingId === p.id ? (
-                <BigButton onClick={() => handleSaveEdit(p.id)}>Save</BigButton>
+                <BigButton onClick={() => handleSaveEdit(p.id)} disabled={!editValid}>
+                  Save
+                </BigButton>
               ) : (
                 <>
                   <button
