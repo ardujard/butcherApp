@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeComposition, oldestActiveDate, replayEvents, totalActiveQty } from '../batchEngine'
+import { activeComposition, displayQty, oldestActiveDate, replayEvents, totalActiveQty } from '../batchEngine'
 import type { DomainEvent } from '../types'
 import { UNKNOWN_DATE } from '../types'
 
@@ -242,5 +242,13 @@ describe('replayEvents openedOn', () => {
     const result = replayEvents([checkpoint('2026-10-14T09:00:00Z', 12)], 'discrete')
     expect(result.batches[UNKNOWN_DATE]).toBe(12)
     expect(result.openedOn).toEqual({})
+  })
+})
+
+describe('displayQty', () => {
+  it('rounds diluted bulk shares and float drift to whole units', () => {
+    expect(displayQty(17.857142857142858)).toBe(18)
+    expect(displayQty(99.99999999999999)).toBe(100)
+    expect(displayQty(6)).toBe(6)
   })
 })

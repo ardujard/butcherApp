@@ -1,6 +1,7 @@
 import type { Product } from '../../domain/types'
 import { batchDetailLabel, lifespanStatus, type LifespanStatus } from '../../domain/dashboard'
 import { dayMonth } from '../../domain/dates'
+import { displayQty } from '../../domain/batchEngine'
 import type { CompositionRow } from '../../state/useProductComposition'
 
 interface Props {
@@ -24,7 +25,7 @@ export function CompositionView({ product, composition, total, unattributed }: P
     <div className="sheet">
       <h3>{product.name}</h3>
       <p>
-        Current total: <strong>{total}{unit}</strong>
+        Current total: <strong>{displayQty(total)}{unit}</strong>
       </p>
       {composition.length === 0 ? (
         <p>No stock currently tracked.</p>
@@ -47,7 +48,7 @@ export function CompositionView({ product, composition, total, unattributed }: P
                     </small>
                   </span>
                   <span className="qty">
-                    {entry.qty}
+                    {displayQty(entry.qty)}
                     {unit}
                   </span>
                 </div>
@@ -56,9 +57,9 @@ export function CompositionView({ product, composition, total, unattributed }: P
           </div>
         </>
       )}
-      {unattributed > 0 && (
+      {displayQty(unattributed) > 0 && (
         <div className="warning-banner">
-          {unattributed}
+          {displayQty(unattributed)}
           {unit} unaccounted for — review recent entries below to correct it.
         </div>
       )}

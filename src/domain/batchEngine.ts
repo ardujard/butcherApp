@@ -134,3 +134,11 @@ export function oldestActiveDate(result: ReplayResult): string | null {
 export function totalActiveQty(result: ReplayResult): number {
   return sum(result.batches)
 }
+
+/** Whole units for display. Bulk dilution leaves fractional percentages
+ * (e.g. 17.857142857142858%) that are kept exact for replay but mean nothing
+ * to staff reading the counter, and float drift can turn a full container
+ * into 99.99999999%. */
+export function displayQty(qty: number): number {
+  return Math.round(qty)
+}
