@@ -1,4 +1,5 @@
-import { lifespanStatus, reasonLabel, type LifespanStatus } from '../../domain/dashboard'
+import { useState } from 'react'
+import { expiryExplanation, lifespanStatus, reasonLabel, type LifespanStatus } from '../../domain/dashboard'
 import { relativeDayLabel } from '../../domain/dates'
 import { useOldestItemsDashboard } from '../../state/useOldestItemsDashboard'
 
@@ -15,6 +16,7 @@ const STATUS_CLASS: Record<LifespanStatus, string> = {
 
 export function OldestItemsDashboard({ onBack, onSelectProduct }: Props) {
   const { entries, loading, sortMode, setSortMode } = useOldestItemsDashboard()
+  const [explaining, setExplaining] = useState<string | null>(null)
   const dated = entries.filter((e) => e.oldestDate != null)
 
   return (
@@ -48,23 +50,36 @@ export function OldestItemsDashboard({ onBack, onSelectProduct }: Props) {
             // falling back to the production date itself for a product with
             // no lifespan tracked, since there's nothing else to show.
             const dateShown =
-              sortMode === 'lifespan' ? (entry.expiryDate ?? entry.oldestDate!) : entry.oldestDate!
+              sortMode === 'lifespan' ? (entry.expiry?.date ?? entry.oldestDate!) : entry.oldestDate!
+            const explanation = expiryExplanation(entry)
+            const open = explaining === entry.productId
             return (
-              <button
-                key={entry.productId}
-                className={`composition-row ${rowClass}`}
-                onClick={() => onSelectProduct(entry.productId)}
-              >
-                <span className="date-label">
-                  {entry.productName}
-                  {sortMode === 'lifespan' && entry.expiryReason && (
-                    <small className={`expiry-note expiry-${entry.expiryReason}`}>
-                      {reasonLabel(entry.expiryReason)}
-                    </small>
+              <div key={entry.productId}>
+                <div className={`composition-row ${rowClass}`}>
+                  <button className="row-select" onClick={() => onSelectProduct(entry.productId)}>
+                    <span className="date-label">
+                      {entry.productName}
+                      {sortMode === 'lifespan' && entry.expiry && (
+                        <small className={`expiry-note expiry-${entry.expiry.reason}`}>
+                          {reasonLabel(entry.expiry.reason)}
+                        </small>
+                      )}
+                    </span>
+                    <span className="qty">{relativeDayLabel(dateShown)}</span>
+                  </button>
+                  {explanation && (
+                    <button
+                      className="info-button"
+                      aria-expanded={open}
+                      aria-label={`Waarom staat ${entry.productName} hier?`}
+                      onClick={() => setExplaining(open ? null : entry.productId)}
+                    >
+                      ⓘ
+                    </button>
                   )}
-                </span>
-                <span className="qty">{relativeDayLabel(dateShown)}</span>
-              </button>
+                </div>
+                {open && explanation && <p className="info-panel">{explanation}</p>}
+              </div>
             )
           })}
         </div>

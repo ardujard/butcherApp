@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Product, CompositionEntry, DomainEvent } from '../domain/types'
 import { UNKNOWN_DATE } from '../domain/types'
-import { activeComposition, oldestActiveDate, replayEvents, totalActiveQty } from '../domain/batchEngine'
+import { activeComposition, replayEvents, totalActiveQty } from '../domain/batchEngine'
 import { batchExpiry, type BatchExpiry } from '../domain/dashboard'
 import { daysBetween, toISODate } from '../domain/dates'
 import { getEventsForProduct } from '../data/eventsRepo'
 
 export interface CompositionRow extends CompositionEntry {
+  /** The day this batch was topped up. Carried separately from `expiry`,
+   * which is null for products with no limit configured — those rows still
+   * lead with when the stock was put out. */
+  openedOn: string | null
   /** When this batch actually goes bad and which limit decides it, so the
    * control page can show a good-till date alongside the shorter counter
    * deadline that may already have overtaken it. */
@@ -17,7 +21,6 @@ export interface CompositionRow extends CompositionEntry {
 export interface ProductComposition {
   events: DomainEvent[]
   composition: CompositionRow[]
-  oldestDate: string | null
   total: number
   unattributed: number
   unexplainedShortfall: number
@@ -55,14 +58,17 @@ export function useProductComposition(product: Product | undefined): ProductComp
   const composition = activeComposition(result)
     .filter((e) => e.date !== UNKNOWN_DATE)
     .map((e) => {
+      const openedOn = result.openedOn[e.date] ?? null
       const expiry = product ? batchExpiry(e.date, result.openedOn[e.date], product) : null
-      return { ...e, expiry, daysRemaining: expiry == null ? null : daysBetween(today, expiry.date) }
+      return { ...e, openedOn, expiry, daysRemaining: expiry == null ? null : daysBetween(today, expiry.date) }
     })
+    // Oldest top-up first: the control page reads as a worklist, and the
+    // stock that has been sitting out longest is what gets dealt with first.
+    .sort((a, b) => (a.openedOn ?? a.date).localeCompare(b.openedOn ?? b.date) || a.date.localeCompare(b.date))
 
   return {
     events,
     composition,
-    oldestDate: oldestActiveDate(result),
     total: totalActiveQty(result),
     unattributed: result.batches[UNKNOWN_DATE] ?? 0,
     unexplainedShortfall: result.unexplainedShortfall,

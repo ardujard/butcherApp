@@ -70,7 +70,6 @@ export function ReadScreen() {
       <CompositionView
         product={selected}
         composition={composition.composition}
-        oldestDate={composition.oldestDate}
         total={composition.total}
         unattributed={composition.unattributed}
       />

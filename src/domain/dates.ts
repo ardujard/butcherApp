@@ -35,14 +35,19 @@ export function daysBetween(startISO: string, endISO: string): number {
   return Math.round((atUTCMidnight(endISO).getTime() - atUTCMidnight(startISO).getTime()) / DAY_MS)
 }
 
+/** Plain 'dd/mm', with no "Today" substitution — for prose, where a
+ * substituted word reads wrong mid-sentence. */
+export function dayMonth(dateISO: string): string {
+  const d = atUTCMidnight(dateISO)
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}`
+}
+
 export function relativeDayLabel(dateISO: string, from: Date = new Date()): string {
   const today = toISODate(from)
   const diffDays = Math.round((atUTCMidnight(dateISO).getTime() - atUTCMidnight(today).getTime()) / DAY_MS)
 
   if (diffDays === 0) return 'Today'
-
-  const d = atUTCMidnight(dateISO)
-  const dd = String(d.getUTCDate()).padStart(2, '0')
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
-  return `${dd}/${mm}`
+  return dayMonth(dateISO)
 }

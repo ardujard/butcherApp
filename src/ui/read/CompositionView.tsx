@@ -1,12 +1,11 @@
 import type { Product } from '../../domain/types'
-import { expiryNoteLabel, lifespanStatus, type LifespanStatus } from '../../domain/dashboard'
-import { relativeDayLabel } from '../../domain/dates'
+import { batchDetailLabel, lifespanStatus, type LifespanStatus } from '../../domain/dashboard'
+import { dayMonth } from '../../domain/dates'
 import type { CompositionRow } from '../../state/useProductComposition'
 
 interface Props {
   product: Product
   composition: CompositionRow[]
-  oldestDate: string | null
   total: number
   unattributed: number
 }
@@ -17,10 +16,9 @@ const STATUS_CLASS: Record<LifespanStatus, string> = {
   exceeded: 'lifespan-exceeded',
 }
 
-export function CompositionView({ product, composition, oldestDate, total, unattributed }: Props) {
+export function CompositionView({ product, composition, total, unattributed }: Props) {
   const unit = product.category === 'bulk' ? '%' : ''
-  const isExternal = product.sourceType === 'external'
-  const hasCounterWindow = isExternal && product.lifespanDays != null
+  const hasCounterWindow = product.lifespanDays != null
 
   return (
     <div className="sheet">
@@ -32,29 +30,21 @@ export function CompositionView({ product, composition, oldestDate, total, unatt
         <p>No stock currently tracked.</p>
       ) : (
         <>
-          <p className="hint-note">
-            {isExternal ? 'Datums hieronder zijn houdbaar-tot-datums.' : 'Datums hieronder zijn productiedatums.'}
-            {hasCounterWindow && ` Max ${product.lifespanDays} dagen in de toonbank na bijvullen.`}
-          </p>
+          {hasCounterWindow && (
+            <p className="hint-note">Max {product.lifespanDays} dagen in de toog na aanvullen.</p>
+          )}
           <div className="composition-list">
             {composition.map((entry) => {
               const status = lifespanStatus(entry.daysRemaining)
-              // Status wins over the plain "oldest" marker: once a real
-              // deadline is known, that's the thing worth colouring by.
-              const rowClass = status
-                ? STATUS_CLASS[status]
-                : entry.date === oldestDate
-                  ? 'oldest'
-                  : ''
               return (
-                <div key={entry.date} className={`composition-row ${rowClass}`}>
+                <div key={entry.date} className={`composition-row ${status ? STATUS_CLASS[status] : ''}`}>
                   <span className="date-label">
-                    {relativeDayLabel(entry.date)}
-                    {entry.expiry && (
-                      <small className={`expiry-note expiry-${entry.expiry.reason}`}>
-                        {expiryNoteLabel(entry.expiry, entry.daysRemaining!)}
-                      </small>
-                    )}
+                    <span className="topup-line">
+                      aangevuld op {entry.openedOn ? dayMonth(entry.openedOn) : 'onbekend'}
+                    </span>
+                    <small className="batch-detail">
+                      {batchDetailLabel(entry.date, product.sourceType, product.lifespanDays, entry.daysRemaining)}
+                    </small>
                   </span>
                   <span className="qty">
                     {entry.qty}

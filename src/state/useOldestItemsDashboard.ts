@@ -43,8 +43,7 @@ export function useOldestItemsDashboard() {
           oldestDate,
           lifespanDays: p.lifespanDays,
           daysRemaining: expiry == null ? null : daysBetween(today, expiry.date),
-          expiryDate: expiry?.date ?? null,
-          expiryReason: expiry?.reason ?? null,
+          expiry,
         }
       }),
     )

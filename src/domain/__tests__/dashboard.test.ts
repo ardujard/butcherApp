@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  batchDetailLabel,
   batchExpiry,
-  expiryNoteLabel,
+  expiryExplanation,
   lifespanStatus,
   soonestBatchExpiry,
   sortByLifespanRemaining,
@@ -18,8 +19,7 @@ function entry(overrides: Partial<OldestItemEntry> = {}): OldestItemEntry {
     oldestDate: null,
     lifespanDays: null,
     daysRemaining: null,
-    expiryDate: null,
-    expiryReason: null,
+    expiry: null,
     ...overrides,
   }
 }
@@ -85,6 +85,7 @@ describe('batchExpiry (in house)', () => {
   it('counts the lifespan forward from the production date', () => {
     expect(batchExpiry('2026-08-21', '2026-08-21', inHouse(3))).toEqual({
       batchKey: '2026-08-21',
+      openedOn: '2026-08-21',
       date: '2026-08-24',
       reason: 'shelf',
     })
@@ -103,6 +104,7 @@ describe('batchExpiry (external)', () => {
   it('falls back to the good-till date when no counter window is set', () => {
     expect(batchExpiry('2026-12-02', '2026-10-14', external(null))).toEqual({
       batchKey: '2026-12-02',
+      openedOn: '2026-10-14',
       date: '2026-12-02',
       reason: 'shelf',
     })
@@ -111,6 +113,7 @@ describe('batchExpiry (external)', () => {
   it('lets the counter window overtake a distant good-till date', () => {
     expect(batchExpiry('2026-12-02', '2026-10-14', external(3))).toEqual({
       batchKey: '2026-12-02',
+      openedOn: '2026-10-14',
       date: '2026-10-17',
       reason: 'counter',
     })
@@ -119,6 +122,7 @@ describe('batchExpiry (external)', () => {
   it('keeps the good-till date when it falls inside the counter window', () => {
     expect(batchExpiry('2026-10-15', '2026-10-14', external(3))).toEqual({
       batchKey: '2026-10-15',
+      openedOn: '2026-10-14',
       date: '2026-10-15',
       reason: 'shelf',
     })
@@ -131,6 +135,7 @@ describe('batchExpiry (external)', () => {
   it('falls back to the good-till date when the batch has no recorded top-up', () => {
     expect(batchExpiry('2026-12-02', undefined, external(3))).toEqual({
       batchKey: '2026-12-02',
+      openedOn: null,
       date: '2026-12-02',
       reason: 'shelf',
     })
@@ -142,6 +147,7 @@ describe('soonestBatchExpiry', () => {
     const result = replay({ '2026-12-02': 8, '2026-10-20': 5 }, { '2026-12-02': '2026-10-14' })
     expect(soonestBatchExpiry(result, external(3))).toEqual({
       batchKey: '2026-12-02',
+      openedOn: '2026-10-14',
       date: '2026-10-17',
       reason: 'counter',
     })
@@ -160,27 +166,70 @@ describe('soonestBatchExpiry', () => {
     expect(soonestBatchExpiry(replay({ '2026-08-21': 5 }), inHouse(null))).toBeNull()
   })
 })
-
-describe('expiryNoteLabel', () => {
-  const from = new Date('2026-10-17T10:00:00Z')
-  const counter = { batchKey: '2026-12-02', date: '2026-10-19', reason: 'counter' as const }
-
-  it('names the limit and the deadline', () => {
-    expect(expiryNoteLabel(counter, 2, from)).toBe('toonbank t/m 19/10 · nog 2 dagen')
+describe('expiryExplanation', () => {
+  it('spells out the counter window, and what the packaging claimed', () => {
+    expect(
+      expiryExplanation({
+        sourceType: 'external',
+        lifespanDays: 3,
+        expiry: { batchKey: '2026-12-02', openedOn: '2026-10-13', date: '2026-10-16', reason: 'counter' },
+      }),
+    ).toBe(
+      'Dit product werd aangevuld op 13/10 en staat ingesteld op max 3 dagen in de toog, ' +
+        'dus tot 16/10. De houdbaarheidsdatum van de verpakking was 02/12.',
+    )
   })
 
-  it('spells out today and tomorrow instead of a bare date', () => {
-    expect(expiryNoteLabel(counter, 0, from)).toBe('toonbank t/m vandaag')
-    expect(expiryNoteLabel(counter, 1, from)).toBe('toonbank t/m morgen')
+  it('points at the good-till date when that is the binding limit', () => {
+    expect(
+      expiryExplanation({
+        sourceType: 'external',
+        lifespanDays: 3,
+        expiry: { batchKey: '2026-10-19', openedOn: '2026-10-17', date: '2026-10-19', reason: 'shelf' },
+      }),
+    ).toBe('Dit product heeft maar een houdbaarheid tot 19/10. Het werd aangevuld op 17/10.')
   })
 
-  it('counts up once the deadline has passed', () => {
-    expect(expiryNoteLabel(counter, -1, from)).toBe('toonbank · 1 dag te laat')
-    expect(expiryNoteLabel(counter, -3, from)).toBe('toonbank · 3 dagen te laat')
+  it('counts from the production date for in-house stock', () => {
+    expect(
+      expiryExplanation({
+        sourceType: 'in house',
+        lifespanDays: 3,
+        expiry: { batchKey: '2026-10-13', openedOn: '2026-10-13', date: '2026-10-16', reason: 'shelf' },
+      }),
+    ).toBe('Dit product is geproduceerd op 13/10 en is 3 dagen houdbaar, dus tot 16/10.')
   })
 
-  it('drops the date when it just repeats the batch date already on screen', () => {
-    const shelf = { batchKey: '2026-12-02', date: '2026-12-02', reason: 'shelf' as const }
-    expect(expiryNoteLabel(shelf, 46, from)).toBe('houdbaar · nog 46 dagen')
+  it('has nothing to explain when no limit is tracked', () => {
+    expect(expiryExplanation({ sourceType: 'in house', lifespanDays: null, expiry: null })).toBeNull()
+  })
+})
+
+describe('batchDetailLabel', () => {
+  it('names the production date for in-house stock', () => {
+    expect(batchDetailLabel('2026-10-13', 'in house', null, null)).toBe('Productiedatum: 13/10')
+  })
+
+  it('names the original good-till date for external stock', () => {
+    expect(batchDetailLabel('2026-12-02', 'external', null, 46)).toBe('Originele houdbaarheidsdatum: 02/12')
+  })
+
+  it('adds how long it may stay out once a lifespan is configured', () => {
+    expect(batchDetailLabel('2026-10-13', 'in house', 3, 2)).toBe(
+      'Productiedatum: 13/10, kan nog 2 dagen in de toog blijven liggen',
+    )
+    expect(batchDetailLabel('2026-12-02', 'external', 3, 1)).toBe(
+      'Originele houdbaarheidsdatum: 02/12, kan nog 1 dag in de toog blijven liggen',
+    )
+  })
+
+  it('switches to an instruction once the time is up', () => {
+    expect(batchDetailLabel('2026-10-13', 'in house', 3, 0)).toBe('Productiedatum: 13/10, moet vandaag uit de toog')
+    expect(batchDetailLabel('2026-10-13', 'in house', 3, -1)).toBe(
+      'Productiedatum: 13/10, moest 1 dag geleden al uit de toog',
+    )
+    expect(batchDetailLabel('2026-10-13', 'in house', 3, -4)).toBe(
+      'Productiedatum: 13/10, moest 4 dagen geleden al uit de toog',
+    )
   })
 })

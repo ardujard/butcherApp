@@ -1,5 +1,5 @@
 import { activeComposition } from './batchEngine'
-import { addDays, relativeDayLabel } from './dates'
+import { addDays, dayMonth } from './dates'
 import { UNKNOWN_DATE, type Product, type ReplayResult, type SourceType } from './types'
 
 /** Which limit decides a batch's expiry date. 'shelf' is the product's own
@@ -13,6 +13,9 @@ export interface BatchExpiry {
   /** The batch's own date: a production date (in-house) or a good-till date
    * (external). What staff recognise the batch by. */
   batchKey: string
+  /** The day this batch was topped up, i.e. when its counter clock started.
+   * Null for stock with no recorded top-up. */
+  openedOn: string | null
   /** The day the batch actually goes bad, per whichever limit binds first. */
   date: string
   reason: ExpiryReason
@@ -27,10 +30,10 @@ export interface OldestItemEntry {
   /** Whole days from today until `expiryDate`, negative once it's passed.
    * Null wherever no limit is tracked or there's no dated stock. */
   daysRemaining: number | null
-  /** The day this product's soonest-expiring batch goes bad, and why. Null
-   * wherever no limit is tracked or there's no dated stock. */
-  expiryDate: string | null
-  expiryReason: ExpiryReason | null
+  /** This product's soonest-expiring batch: when it goes bad, which limit
+   * decides that, and the dates behind it. Null wherever no limit is tracked
+   * or there's no dated stock. */
+  expiry: BatchExpiry | null
 }
 
 export type LifespanStatus = 'ok' | 'warning' | 'exceeded'
@@ -69,15 +72,19 @@ export function batchExpiry(
 ): BatchExpiry | null {
   if (batchKey === UNKNOWN_DATE) return null
 
+  const opened = openedOn ?? null
+
   if (product.sourceType !== 'external') {
     if (product.lifespanDays == null) return null
-    return { batchKey, date: addDays(batchKey, product.lifespanDays), reason: 'shelf' }
+    return { batchKey, openedOn: opened, date: addDays(batchKey, product.lifespanDays), reason: 'shelf' }
   }
 
-  const goodTill: BatchExpiry = { batchKey, date: batchKey, reason: 'shelf' }
-  if (product.lifespanDays == null || openedOn == null) return goodTill
-  const counterDate = addDays(openedOn, product.lifespanDays)
-  return counterDate < batchKey ? { batchKey, date: counterDate, reason: 'counter' } : goodTill
+  const goodTill: BatchExpiry = { batchKey, openedOn: opened, date: batchKey, reason: 'shelf' }
+  if (product.lifespanDays == null || opened == null) return goodTill
+  const counterDate = addDays(opened, product.lifespanDays)
+  return counterDate < batchKey
+    ? { batchKey, openedOn: opened, date: counterDate, reason: 'counter' }
+    : goodTill
 }
 
 /**
@@ -101,19 +108,65 @@ export function reasonLabel(reason: ExpiryReason): string {
   return reason === 'counter' ? 'toonbank' : 'houdbaar'
 }
 
-/** Dutch one-liner spelling out a batch's real deadline, e.g. "toonbank t/m
- * 19/10 · nog 2 dagen". The date is dropped when it's the same one already
- * shown as the batch's own date, which would just read twice over. */
-export function expiryNoteLabel(expiry: BatchExpiry, daysRemaining: number, from: Date = new Date()): string {
-  const what = reasonLabel(expiry.reason)
-  if (daysRemaining < 0) {
-    const late = -daysRemaining
-    return `${what} · ${late} ${late === 1 ? 'dag' : 'dagen'} te laat`
+function days(n: number): string {
+  return `${n} ${n === 1 ? 'dag' : 'dagen'}`
+}
+
+/** How much longer a batch may stay out on the counter, in Dutch. */
+function counterClause(daysRemaining: number): string {
+  if (daysRemaining > 0) return `kan nog ${days(daysRemaining)} in de toog blijven liggen`
+  if (daysRemaining === 0) return 'moet vandaag uit de toog'
+  return `moest ${days(-daysRemaining)} geleden al uit de toog`
+}
+
+/**
+ * Dutch second line for a batch on a product's control page: the date the
+ * batch itself carries, and — only once a lifespan is configured, since
+ * that's what puts a clock on it — how much longer it may stay out.
+ */
+export function batchDetailLabel(
+  batchKey: string,
+  sourceType: SourceType,
+  lifespanDays: number | null,
+  daysRemaining: number | null,
+): string {
+  const carried =
+    sourceType === 'external'
+      ? `Originele houdbaarheidsdatum: ${dayMonth(batchKey)}`
+      : `Productiedatum: ${dayMonth(batchKey)}`
+  if (lifespanDays == null || daysRemaining == null) return carried
+  return `${carried}, ${counterClause(daysRemaining)}`
+}
+
+/**
+ * Dutch sentence explaining why a product is on the oldest-stock list: which
+ * limit caught it, and the dates behind that. Shown behind the info control
+ * on each row, where the one-word tag alone doesn't say enough to act on.
+ *
+ * Null when nothing is tracked, which is also when there's no info control.
+ */
+export function expiryExplanation(entry: Pick<OldestItemEntry, 'expiry' | 'lifespanDays' | 'sourceType'>): string | null {
+  const { expiry, lifespanDays } = entry
+  if (expiry == null) return null
+
+  if (expiry.reason === 'counter') {
+    // openedOn is always set when the counter window is what binds.
+    return (
+      `Dit product werd aangevuld op ${dayMonth(expiry.openedOn!)} en staat ingesteld op max ` +
+      `${lifespanDays} dagen in de toog, dus tot ${dayMonth(expiry.date)}. ` +
+      `De houdbaarheidsdatum van de verpakking was ${dayMonth(expiry.batchKey)}.`
+    )
   }
-  if (daysRemaining === 0) return `${what} t/m vandaag`
-  if (daysRemaining === 1) return `${what} t/m morgen`
-  if (expiry.date === expiry.batchKey) return `${what} · nog ${daysRemaining} dagen`
-  return `${what} t/m ${relativeDayLabel(expiry.date, from)} · nog ${daysRemaining} dagen`
+
+  if (entry.sourceType === 'external') {
+    const opened = expiry.openedOn ? ` Het werd aangevuld op ${dayMonth(expiry.openedOn)}.` : ''
+    return `Dit product heeft maar een houdbaarheid tot ${dayMonth(expiry.date)}.${opened}`
+  }
+
+  return (
+    `Dit product is geproduceerd op ${dayMonth(expiry.batchKey)} en is ${lifespanDays} dagen ` +
+    `houdbaar, dus tot ${dayMonth(expiry.date)}.`
+  )
 }
 
 /** Products with the oldest at-risk stock first; products with no dated
