@@ -43,6 +43,42 @@ function migrateBackup(data: BackupData): BackupData {
   return data
 }
 
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
+const isString = (v: unknown): v is string => typeof v === 'string'
+const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+
+/** Names the first record missing a field the app relies on, or null. Only
+ * checks what replay and the screens would trip over, so a damaged file is
+ * refused up front instead of being written over good data and crashing
+ * later. */
+function firstBadRecord(data: BackupData): string | null {
+  const label = data.labels.findIndex((l) => !isObject(l) || !isString(l.id) || !isString(l.name))
+  if (label >= 0) return `label ${label + 1}`
+
+  const product = data.products.findIndex(
+    (p) =>
+      !isObject(p) ||
+      !isString(p.id) ||
+      !isString(p.name) ||
+      (p.category !== 'discrete' && p.category !== 'bulk') ||
+      (p.sourceType !== 'in house' && p.sourceType !== 'external'),
+  )
+  if (product >= 0) return `product ${product + 1}`
+
+  const event = data.events.findIndex((e) => {
+    if (!isObject(e) || !isNumber(e.id) || !isString(e.productId) || !isString(e.recordedAt) || !isObject(e.payload)) {
+      return true
+    }
+    const payload = e.payload as Record<string, unknown>
+    if (e.type === 'topup') return !isString(payload.productionDate)
+    if (e.type === 'checkpoint') return !isNumber(payload.statedTotal)
+    return true
+  })
+  if (event >= 0) return `entry ${event + 1}`
+
+  return null
+}
+
 /** Parses and shape-checks an uploaded backup file's text before it's trusted
  * as an import source, migrating older backup versions to the current shape. */
 export function parseBackup(text: string): BackupData {
@@ -66,7 +102,12 @@ export function parseBackup(text: string): BackupData {
   if (backup.version > BACKUP_VERSION) {
     throw new Error('This backup was made by a newer version of the app. Update the app before restoring it.')
   }
-  return migrateBackup(backup)
+  const migrated = migrateBackup(backup)
+  const bad = firstBadRecord(migrated)
+  if (bad) {
+    throw new Error(`This backup is damaged (${bad} is incomplete) and can't be restored.`)
+  }
+  return migrated
 }
 
 /** Replaces all local data with the contents of a backup, in one

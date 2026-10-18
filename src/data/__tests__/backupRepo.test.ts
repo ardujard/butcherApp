@@ -76,4 +76,20 @@ describe('backupRepo', () => {
     )
     expect(parsed.products[0]).toMatchObject({ sourceType: 'in house', lifespanDays: null, layerSize: null })
   })
+
+  it('rejects a backup whose records are missing fields the app relies on', () => {
+    const backup = (events: unknown[]) =>
+      JSON.stringify({ version: 2, exportedAt: 'x', labels: [], products: [], events })
+    expect(() => parseBackup(backup([{ id: 1, productId: 'p1', type: 'topup', recordedAt: 'x', payload: {} }]))).toThrow(
+      'entry 1 is incomplete',
+    )
+    expect(() => parseBackup(backup([null]))).toThrow('damaged')
+  })
+
+  it('rejects a product with an unknown category', () => {
+    const product = { id: 'p1', name: 'Worst', category: 'weird', sourceType: 'in house' }
+    expect(() =>
+      parseBackup(JSON.stringify({ version: 2, exportedAt: 'x', labels: [], products: [product], events: [] })),
+    ).toThrow('product 1 is incomplete')
+  })
 })
